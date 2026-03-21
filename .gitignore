@@ -1,0 +1,16 @@
+# IDE
+.idea/
+
+# Build
+cmake-build-*/
+build/
+
+# Compiled objects
+*.o
+*.obj
+*.exe
+*.out
+*.app
+
+# OS
+.DS_Store
