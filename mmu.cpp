@@ -6,6 +6,14 @@
 #include "bios.h"
 
 Mmu::Mmu(Gameboy &gameboy) {
+    power_on();
+}
+
+void Mmu::power_on() {
+    mem[0xFF05] = 0x00;
+    mem[0xFF06] = 0x00;
+    mem[0xFF07] = 0x00;
+    mem[0xFF10] = 0x80;
 }
 
 /**

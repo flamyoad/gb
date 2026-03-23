@@ -12,6 +12,7 @@ class Gameboy;
 class Mmu {
 public:
     explicit Mmu(Gameboy &gameboy);
+    void power_on();
     auto read(u16 address) -> u8;
     void write(u16 address, u8 value);
 

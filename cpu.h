@@ -10,13 +10,46 @@ class Gameboy;
 class Cpu {
 public:
         explicit Cpu(Gameboy &gb);
+        auto tick() -> u32;
 
-        // B, C, D, E, H, L, A, F
-        u8 registers[8];
+private:
+        Gameboy& gb;
 
+        // https://meganesu.github.io/generate-gb-opcodes/
+        // Registers
+        u8 a, b, c, d, e, h, l;
+        u8 f; // [7]=Z [6]=N [5]=H [4]=C  [3:0]= Hardware enforced always 0
         u16 pc;
         u16 sp;
 
-        //todo: Opcode found in below link. note there are 8bit and 16bit (0xCB)
-        // https://meganesu.github.io/generate-gb-opcodes/
+        // Register pairs
+        u16 af() const;
+        u16 bc() const;
+        u16 de() const;
+        u16 hl() const;
+
+        void set_af(u16 value);
+        void set_bc(u16 value);
+        void set_de(u16 value);
+        void set_hl(u16 value);
+
+        // Flags
+        static constexpr u8 FLAG_Z = 1 << 7; // Zero flag
+        static constexpr u8 FLAG_N = 1 << 6; // INC/DEC flag (BCD)
+        static constexpr u8 FLAG_H = 1 << 5; // Half-carry flag (BCD)
+        static constexpr u8 FLAG_C = 1 << 4; // Carry flag;
+
+        void set_flag(u8 mask, bool value);
+
+        // CPU fetch decode operations
+        auto execute(u8 opcode) -> u32;
+        auto execute_cb_opcode(u8 opcode) -> u32;
+
+        auto fetch_8bit() -> u8;
+        auto fetch_16bit() -> u16;
+
+        auto read_mmu(u16 address) -> u8;
+        auto write_mmu(u16 address, u8 value) -> void;
+
+        // auto alu_add
 };
