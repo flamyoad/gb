@@ -79,15 +79,12 @@ auto Cpu::execute(const u8 opcode) -> u32 {
             set_bc(bc() + 1);
             return 2;
 
-        case 0x04: {
-            // todo : extract this perhaps aftet few more opcodes
-            const u8 result = b + 1;
-            set_flag(FLAG_Z, result == 0);
-            set_flag(FLAG_N, false);
-            set_flag(FLAG_H, (b & 0xF) == 0xF); // Set to true if bit3 overflowed into bit4
-            b = result;
-            return 1;
-        }
+        case 0x04: return INC_r8(b);
+        case 0x05: return DEC_r8(b);
+        case 0x06: return LD_r8_n8(b);
+        case 0x07: return RLCA();
+        case 0x08: return LD_n16_SP();
+        case 0x09: return ADD_HL_rr(bc());
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -117,3 +114,60 @@ auto Cpu::read_mmu(u16 address) -> u8 {
 auto Cpu::write_mmu(u16 address, u8 value) -> void {
     gb.mmu.write(address, value);
 }
+
+auto Cpu::INC_r8(u8 &reg) -> u8 {
+    const u8 result = reg + 1;
+    set_flag(FLAG_Z, result == 0);
+    set_flag(FLAG_N, false);
+    set_flag(FLAG_H, (reg & 0xF) == 0xF); // Set to true if bit3 overflowed into bit4
+    reg = result;
+    return 1;
+}
+
+auto Cpu::DEC_r8(u8 &reg) -> u8 {
+    const u8 result = reg - 1;
+    set_flag(FLAG_Z, result == 0);
+    set_flag(FLAG_N, true);
+    set_flag(FLAG_H, (reg & 0xF) == 0x0); // Set if borrow from bit 4
+    reg = result;
+    return 1;
+}
+
+auto Cpu::LD_r8_n8(u8 &reg) -> u8 {
+    reg = fetch_8bit();
+    return 2;
+}
+
+auto Cpu::LD_n16_SP() -> u8 {
+    const u16 n16 = fetch_16bit();
+    const u8 sp_lsb = sp & 0xFF;
+    const u8 sp_msb = (sp >> 8) & 0xFF;
+    write_mmu(n16, sp_lsb);
+    write_mmu(n16 + 1, sp_msb);
+    return 5;
+}
+
+auto Cpu::RLCA() -> u8 {
+    const u8 reg_a_msb = (a >> 7 & 0x1);
+    a = a << 1 | a >> 7;
+    set_flag(FLAG_Z, false);
+    set_flag(FLAG_N, false);
+    set_flag(FLAG_H, false);
+    set_flag(FLAG_C, reg_a_msb);
+    return 1;
+}
+
+auto Cpu::ADD_HL_rr(const u16 rr) -> u8 {
+    // is overflow from bit 11?
+    const bool flag_h = (hl() & 0xFFF) + (rr & 0xFFF) > 0xFFF;
+
+    // is overflow from bit 15?
+    const bool flag_c = static_cast<u32>(hl()) + rr > 0xFFFF;
+
+    set_hl(hl() + rr);
+    set_flag(FLAG_N, false);
+    set_flag(FLAG_H, flag_h);
+    set_flag(FLAG_C, flag_c);
+    return 2;
+}
+

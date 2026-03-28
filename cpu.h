@@ -15,7 +15,9 @@ public:
 private:
         Gameboy& gb;
 
-        // https://meganesu.github.io/generate-gb-opcodes/
+        /*
+        https://meganesu.github.io/generate-gb-opcodes/
+        */
         // Registers
         u8 a, b, c, d, e, h, l;
         u8 f; // [7]=Z [6]=N [5]=H [4]=C  [3:0]= Hardware enforced always 0
@@ -51,5 +53,15 @@ private:
         auto read_mmu(u16 address) -> u8;
         auto write_mmu(u16 address, u8 value) -> void;
 
+        // todo: move those to new class once bigger
+        auto INC_r8(u8 &reg) -> u8;
+        auto DEC_r8(u8 &reg) -> u8;
+        auto LD_r8_n8(u8 &reg) -> u8;
+        auto LD_r8_r8(u8 &reg_into, u8 reg_from) -> u8;
+        auto LD_n16_SP() -> u8;
+
+        auto ADD_HL_rr(u16 rr) -> u8;
+
+        auto RLCA() -> u8;
         // auto alu_add
 };
