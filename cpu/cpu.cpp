@@ -3,58 +3,37 @@
 //
 
 #include "cpu.h"
-#include "gameboy.h"
-#include "common_types.h"
+#include "../gameboy.h"
+#include "../common_types.h"
 
 Cpu::Cpu(Gameboy &gb) :
-    gb(gb) {
+    gb(gb),
+    af(a, f),
+    bc(b, c),
+    de(d, e),
+    hl(h, l) {
 
     // https://bgb.bircd.org/pandocs.htm#powerupsequence
     pc = 0x0100;
     sp = 0xFFFE;
-    a = 0x01; f = 0xB0;
-    b = 0x00; c = 0x13;
-    d = 0x00; e = 0xD8;
-    h = 0x01; l = 0x4D;
-}
-
-u16 Cpu::af() const { return static_cast<u16>(a) << 8 | f; }
-u16 Cpu::bc() const { return static_cast<u16>(b) << 8 | c; }
-u16 Cpu::de() const { return static_cast<u16>(d) << 8 | e; }
-u16 Cpu::hl() const { return static_cast<u16>(h) << 8 | l; }
-
-void Cpu::set_af(const u16 value) {
-    a = value >> 8;
-    f = value & 0xF0; // Bit 0 to 3 must always be zero
-}
-
-void Cpu::set_bc(const u16 value) {
-    b = value >> 8;
-    c = value & 0xFF;
-}
-
-void Cpu::set_de(const u16 value) {
-    d = value >> 8;
-    e = value & 0xFF;
-}
-
-void Cpu::set_hl(const u16 value) {
-    h = value >> 8;
-    l = value & 0xFF;
-}
-
-void Cpu::set_flag(const u8 mask, const bool value) {
-    if (value) {
-        f |= mask;
-    } else {
-        f &= ~mask;
-    }
+    a.value = 0x01;
+    f.value = 0xB0;
+    b.value = 0x00;
+    c.value = 0x13;
+    d.value = 0x00;
+    e.value = 0xD8;
+    h.value = 0x01;
+    l.value = 0x4D;
 }
 
 auto Cpu::tick() -> u32 {
     auto opcode = fetch_8bit();
     auto cycle_count = execute(opcode);
     return cycle_count;
+}
+
+auto Cpu::set_flag(const u8 mask, const bool value) -> void {
+    f.set(mask, value);
 }
 
 // https://rgbds.gbdev.io/docs/v0.6.0/gbz80.7#ADC_A,r8
@@ -64,27 +43,18 @@ auto Cpu::tick() -> u32 {
 // use this for ALU operations
 auto Cpu::execute(const u8 opcode) -> u32 {
     switch (opcode) {
-        case 0x00:
-            return 1;
-
-        case 0x01:
-            set_bc(fetch_16bit());
-            return 3;
-
-        case 0x02:
-            write_mmu(bc(), a);
-            return 2;
-
-        case 0x03:
-            set_bc(bc() + 1);
-            return 2;
-
+        case 0x00: return NOP();
+        case 0x01: return LD_r16_n16(bc, fetch_16bit());
+        case 0x02: return LD_m16_r8(bc, a);
+        case 0x03: return INC_r16(bc);
         case 0x04: return INC_r8(b);
         case 0x05: return DEC_r8(b);
         case 0x06: return LD_r8_n8(b);
         case 0x07: return RLCA();
         case 0x08: return LD_n16_SP();
-        case 0x09: return ADD_HL_rr(bc());
+        case 0x09: return ADD_HL_r16(bc);
+        case 0x0A: return LD_r8_r16(a, bc);
+        case 0x0B: return DEC_r16(bc);
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -115,26 +85,55 @@ auto Cpu::write_mmu(u16 address, u8 value) -> void {
     gb.mmu.write(address, value);
 }
 
-auto Cpu::INC_r8(u8 &reg) -> u8 {
-    const u8 result = reg + 1;
+auto Cpu::NOP() -> u8 {
+    return 1;
+}
+
+auto Cpu::INC_r8(Register &reg) -> u8 {
+    const u8 result = reg.value + 1;
     set_flag(FLAG_Z, result == 0);
     set_flag(FLAG_N, false);
-    set_flag(FLAG_H, (reg & 0xF) == 0xF); // Set to true if bit3 overflowed into bit4
-    reg = result;
+    set_flag(FLAG_H, (reg.value & 0xF) == 0xF); // Set to true if bit3 overflowed into bit4
+    reg.value = result;
     return 1;
 }
 
-auto Cpu::DEC_r8(u8 &reg) -> u8 {
-    const u8 result = reg - 1;
+auto Cpu::INC_r16(RegisterPair &reg_pair) -> u8 {
+    reg_pair.set(reg_pair.value() + 1);
+    return 2;
+}
+
+auto Cpu::DEC_r8(Register &reg) -> u8 {
+    const u8 result = reg.value - 1;
     set_flag(FLAG_Z, result == 0);
     set_flag(FLAG_N, true);
-    set_flag(FLAG_H, (reg & 0xF) == 0x0); // Set if borrow from bit 4
-    reg = result;
+    set_flag(FLAG_H, (reg.value & 0xF) == 0x0); // Set if borrow from bit 4
+    reg.value = result;
     return 1;
 }
 
-auto Cpu::LD_r8_n8(u8 &reg) -> u8 {
-    reg = fetch_8bit();
+auto Cpu::DEC_r16(RegisterPair &reg_pair) -> u8 {
+    reg_pair.set(reg_pair.value() - 1);
+    return 2;
+}
+
+auto Cpu::LD_r8_n8(Register &reg) -> u8 {
+    reg.value = fetch_8bit();
+    return 2;
+}
+
+auto Cpu::LD_r16_n16(RegisterPair &reg_pair, u16 value) -> u8 {
+    reg_pair.set(value);
+    return 3;
+}
+
+auto Cpu::LD_m16_r8(RegisterPair &reg_pair, Register reg) -> u8 {
+    write_mmu(reg_pair.value(), reg.value);
+    return 2;
+}
+
+auto Cpu::LD_r8_r16(Register &reg, RegisterPair reg_pair) -> u8 {
+    reg.value = read_mmu(reg_pair.value());
     return 2;
 }
 
@@ -148,8 +147,8 @@ auto Cpu::LD_n16_SP() -> u8 {
 }
 
 auto Cpu::RLCA() -> u8 {
-    const u8 reg_a_msb = (a >> 7 & 0x1);
-    a = a << 1 | a >> 7;
+    const u8 reg_a_msb = (a.value >> 7 & 0x1);
+    a.value = a.value << 1 | a.value >> 7;
     set_flag(FLAG_Z, false);
     set_flag(FLAG_N, false);
     set_flag(FLAG_H, false);
@@ -157,14 +156,14 @@ auto Cpu::RLCA() -> u8 {
     return 1;
 }
 
-auto Cpu::ADD_HL_rr(const u16 rr) -> u8 {
+auto Cpu::ADD_HL_r16(const RegisterPair reg_pair) -> u8 {
     // is overflow from bit 11?
-    const bool flag_h = (hl() & 0xFFF) + (rr & 0xFFF) > 0xFFF;
+    const bool flag_h = (hl.value() & 0xFFF) + (reg_pair.value() & 0xFFF) > 0xFFF;
 
     // is overflow from bit 15?
-    const bool flag_c = static_cast<u32>(hl()) + rr > 0xFFFF;
+    const bool flag_c = static_cast<u32>(hl.value()) + reg_pair.value() > 0xFFFF;
 
-    set_hl(hl() + rr);
+    hl.set(hl.value() + reg_pair.value());
     set_flag(FLAG_N, false);
     set_flag(FLAG_H, flag_h);
     set_flag(FLAG_C, flag_c);
