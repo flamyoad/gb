@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "gameboy.h"
 
 int main() {

@@ -21,10 +21,13 @@ public:
     auto set(u8 mask, bool flag_value) -> void;
 };
 
-static constexpr u8 FLAG_Z = 1 << 7; // Zero flag
-static constexpr u8 FLAG_N = 1 << 6; // INC/DEC flag (BCD)
-static constexpr u8 FLAG_H = 1 << 5; // Half-carry flag (BCD)
-static constexpr u8 FLAG_C = 1 << 4; // Carry flag;
+enum class Flag : u8 {
+    Z = 1 << 7, // Zero flag
+    N = 1 << 6, // INC/DEC flag (BCD)
+    H = 1 << 5, // Half-carry flag (BCD)
+    C = 1 << 4, // Carry flag;
+};
+
 
 // RegisterPair
 class RegisterPair {
