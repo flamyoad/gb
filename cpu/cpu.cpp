@@ -82,6 +82,12 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x1F: return RRA();
         case 0x20: return JR_cc_s8(JumpCondition(Flag::Z, Condition::isZero));
         case 0x21: return LD_r16_n16(de);
+        case 0x22: return LD_HLinc_A();
+        case 0x23: return INC_r16(hl);
+        case 0x24: return INC_r8(h);
+        case 0x25: return DEC_r8(h);
+        case 0x26: return LD_r8_n8(h);
+        case 0x27: return DAA();
 
         case 0x29: return ADD_HL_r16(hl);
 
@@ -263,3 +269,60 @@ auto Cpu::RRA() -> u8 {
     return 1;
 }
 
+// Load to the 8-bit A register, data from the absolute address specified by the 16-bit register HL.
+// The value of HL is decremented after the memory read.
+auto Cpu::LD_A_HLdec() -> u8 {
+    a.value = read_mmu(hl.value());
+    hl.set(hl.value() - 1);
+    return 2;
+}
+
+// Load to the absolute address specified by the 16-bit register HL, data from the 8-bit A register.
+// The value of HL is decremented after the memory write
+auto Cpu::LD_HLdec_A() -> u8 {
+    write_mmu(hl.value(), a.value);
+    hl.set(hl.value() - 1);
+    return 2;
+}
+
+// Load to the 8-bit A register, data from the absolute address specified by the 16-bit register HL.
+// The value of HL is incremented after the memory read.
+auto Cpu::LD_A_HLinc() -> u8 {
+    a.value = read_mmu(hl.value());
+    hl.set(hl.value() + 1);
+    return 2;
+}
+
+// Load to the absolute address specified by the 16-bit register HL, data from the 8-bit A register.
+// The value of HL is incremented after the memory write
+auto Cpu::LD_HLinc_A() -> u8 {
+    a.value = read_mmu(hl.value());
+    hl.set(hl.value() + 1);
+    return 2;
+}
+
+// Adjust the accumulator (register A) to a binary-coded decimal (BCD) number after BCD addition and subtraction operations.
+// Example is : 70(dec) converted to 0x70(BCD) instead of its actual value 0x46(hex)
+// TODO: hmmmmm let revisit later
+auto Cpu::DAA() -> u8 {
+    // if (get_flag_value(Flag::N)) {
+    //     if (get_flag_value(Flag::H)) {
+    //         a.value = a.value -= 0x06;
+    //     }
+    //     if (get_flag_value(Flag::C)) {
+    //         a.value = a.value -= 0x60;
+    //     }
+    // } else {
+    //     if (get_flag_value(Flag::H) || (a.value & 0x0F) > 0x9) {
+    //         a.value = a.value + 0x06;
+    //     }
+    //     if (get_flag_value(Flag::C) || a.value > 0x99) {
+    //         a.value = a.value + 0x60;
+    //         set_flag_value(Flag::C, true);
+    //     }
+    // }
+    //
+    // set_flag_value(Flag::Z, a.value == 0);
+    // set_flag_value(Flag::H, false);
+    return 1;
+}

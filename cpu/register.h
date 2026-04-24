@@ -23,7 +23,7 @@ public:
 
 enum class Flag : u8 {
     Z = 1 << 7, // Zero flag
-    N = 1 << 6, // INC/DEC flag (BCD)
+    N = 1 << 6, // INC/DEC flag (BCD) 0-addition, 1-subtraction
     H = 1 << 5, // Half-carry flag (BCD)
     C = 1 << 4, // Carry flag;
 };

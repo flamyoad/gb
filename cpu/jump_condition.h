@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <register.h>
+#include "register.h"
 
 enum class Condition {
     isOne, // flag is 1

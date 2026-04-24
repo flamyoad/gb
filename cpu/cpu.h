@@ -63,6 +63,10 @@ private:
         auto LD_m16_r8(RegisterPair &reg_pair, Register reg) -> u8;
         auto LD_r8_r16(Register &reg, RegisterPair reg_pair) -> u8;
         auto LD_n16_SP() -> u8;
+        auto LD_A_HLdec() -> u8;
+        auto LD_HLdec_A() -> u8;
+        auto LD_A_HLinc() -> u8;
+        auto LD_HLinc_A() -> u8;
 
         auto ADD_HL_r16(RegisterPair reg_pair) -> u8;
 
@@ -70,5 +74,6 @@ private:
         auto RRCA() -> u8;
         auto RLA() -> u8;
         auto RRA() -> u8;
-        // auto alu_add
+
+        auto DAA() -> u8;
 };
