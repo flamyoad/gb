@@ -303,26 +303,29 @@ auto Cpu::LD_HLinc_A() -> u8 {
 
 // Adjust the accumulator (register A) to a binary-coded decimal (BCD) number after BCD addition and subtraction operations.
 // Example is : 70(dec) converted to 0x70(BCD) instead of its actual value 0x46(hex)
-// TODO: hmmmmm let revisit later
 auto Cpu::DAA() -> u8 {
-    // if (get_flag_value(Flag::N)) {
-    //     if (get_flag_value(Flag::H)) {
-    //         a.value = a.value -= 0x06;
-    //     }
-    //     if (get_flag_value(Flag::C)) {
-    //         a.value = a.value -= 0x60;
-    //     }
-    // } else {
-    //     if (get_flag_value(Flag::H) || (a.value & 0x0F) > 0x9) {
-    //         a.value = a.value + 0x06;
-    //     }
-    //     if (get_flag_value(Flag::C) || a.value > 0x99) {
-    //         a.value = a.value + 0x60;
-    //         set_flag_value(Flag::C, true);
-    //     }
-    // }
-    //
-    // set_flag_value(Flag::Z, a.value == 0);
-    // set_flag_value(Flag::H, false);
+    u8 offset = 0;
+
+    // The bitwise OR operator is equivalent to addition if the two values share no bits in common (mutually exclusive)
+    if (!get_flag_value(Flag::N)) { // Addition
+        if (get_flag_value(Flag::H) || (a.value & 0x0F) > 0x09) {
+            offset |= 0x06;
+        }
+        if (get_flag_value(Flag::C) || a.value > 0x99) {
+            offset |= 0x60;
+            set_flag_value(Flag::C, true);
+        }
+        a.value += offset;
+    } else { // Subtraction
+        if (get_flag_value(Flag::H)) {
+            offset |= 0x06;
+        }
+        if (get_flag_value(Flag::C)) {
+            offset |= 0x60;
+        }
+        a.value -= offset;
+    }
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::H, false);
     return 1;
 }
