@@ -54,21 +54,27 @@ private:
         auto JR_cc_s8(JumpCondition cc) -> u8;
         auto INC_r8(Register &reg) -> u8;
         auto INC_r16(RegisterPair &reg_pair) -> u8;
+        auto INC_SP() -> u8;
         auto DEC_r8(Register &reg) -> u8;
         auto DEC_r16(RegisterPair &reg_pair) -> u8;
+        auto DEC_SP() -> u8;
         auto LD_r8_n8(Register &reg) -> u8;
         auto LD_r8_r8(Register &reg_into, Register reg_from) -> u8;
-        auto LD_r16_n8(Register &reg) -> u8;
+        auto LD_r8_m16(Register &reg_into, RegisterPair reg_pair) -> u8;
+        auto LD_m16_n8(RegisterPair &reg_pair) -> u8;
         auto LD_r16_n16(RegisterPair &reg_pair) -> u8;
         auto LD_m16_r8(RegisterPair &reg_pair, Register reg) -> u8;
         auto LD_r8_r16(Register &reg, RegisterPair reg_pair) -> u8;
         auto LD_n16_SP() -> u8;
+        auto LD_SP_n16() -> u8;
         auto LD_A_HLdec() -> u8;
         auto LD_HLdec_A() -> u8;
         auto LD_A_HLinc() -> u8;
         auto LD_HLinc_A() -> u8;
 
+        auto ADD_r8_r8(Register &reg_into, Register reg_from) -> u8;
         auto ADD_HL_r16(RegisterPair reg_pair) -> u8;
+        auto ADD_HL_SP() -> u8;
 
         auto RLCA() -> u8;
         auto RRCA() -> u8;
@@ -76,4 +82,9 @@ private:
         auto RRA() -> u8;
 
         auto DAA() -> u8;
+        auto CPL() -> u8;
+        auto CCF() -> u8;
+        auto SCF() -> u8;
+
+        auto HALT() -> u8;
 };

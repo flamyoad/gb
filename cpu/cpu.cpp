@@ -88,8 +88,94 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x25: return DEC_r8(h);
         case 0x26: return LD_r8_n8(h);
         case 0x27: return DAA();
-
+        case 0x28: return JR_cc_s8(JumpCondition(Flag::Z, Condition::isOne));
         case 0x29: return ADD_HL_r16(hl);
+        case 0x2A: return LD_A_HLinc();
+        case 0x2B: return DEC_r16(hl);
+        case 0x2C: return INC_r8(l);
+        case 0x2D: return DEC_r8(l);
+        case 0x2E: return LD_r8_n8(e);
+        case 0x2F: return CPL();
+        case 0x30: return JR_cc_s8(JumpCondition(Flag::C, Condition::isZero));
+        case 0x31: return LD_SP_n16();
+        case 0x32: return LD_HLdec_A();
+        case 0x33: return INC_SP();
+        case 0x34: return INC_r16(hl);
+        case 0x35: return DEC_r16(hl);
+        case 0x36: return LD_m16_n8(hl);
+        case 0x37: return SCF();
+        case 0x38: return JR_cc_s8(JumpCondition(Flag::C, Condition::isOne));
+        case 0x39: return ADD_HL_SP();
+        case 0x3A: return LD_A_HLdec();
+        case 0x3B: return DEC_SP();
+        case 0x3C: return INC_r8(a);
+        case 0x3D: return DEC_r8(a);
+        case 0x3E: return LD_r8_n8(l);
+        case 0x3F: return CCF();
+        case 0x40: return LD_r8_r8(b, b);
+        case 0x41: return LD_r8_r8(b, c);
+        case 0x42: return LD_r8_r8(b, d);
+        case 0x43: return LD_r8_r8(b, e);
+        case 0x44: return LD_r8_r8(b, h);
+        case 0x45: return LD_r8_r8(b, l);
+        case 0x46: return LD_r8_m16(b, hl);
+        case 0x47: return LD_r8_r8(b, a);
+        case 0x48: return LD_r8_r8(c, b);
+        case 0x49: return LD_r8_r8(c ,c);
+        case 0x4A: return LD_r8_r8(c, d);
+        case 0x4B: return LD_r8_r8(c, e);
+        case 0x4C: return LD_r8_r8(c, h);
+        case 0x4D: return LD_r8_r8(c, l);
+        case 0x4E: return LD_r8_m16(c, hl);
+        case 0x4F: return LD_r8_r8(c, a);
+        case 0x50: return LD_r8_r8(d, b);
+        case 0x51: return LD_r8_r8(d, c);
+        case 0x52: return LD_r8_r8(d, d);
+        case 0x53: return LD_r8_r8(d, e);
+        case 0x54: return LD_r8_r8(d, h);
+        case 0x55: return LD_r8_r8(d, l);
+        case 0x56: return LD_r8_m16(d, hl);
+        case 0x57: return LD_r8_r8(d, a);
+        case 0x58: return LD_r8_r8(e, b);
+        case 0x59: return LD_r8_r8(e, c);
+        case 0x5A: return LD_r8_r8(e, d);
+        case 0x5B: return LD_r8_r8(e, e);
+        case 0x5C: return LD_r8_r8(e, h);
+        case 0x5D: return LD_r8_r8(e, l);
+        case 0x5E: return LD_r8_m16(e, hl);
+        case 0x5F: return LD_r8_r8(e, a);
+        case 0x60: return LD_r8_r8(d, b);
+        case 0x61: return LD_r8_r8(h, c);
+        case 0x62: return LD_r8_r8(h, d);
+        case 0x63: return LD_r8_r8(h, e);
+        case 0x64: return LD_r8_r8(h, h);
+        case 0x65: return LD_r8_r8(h, l);
+        case 0x66: return LD_r8_m16(h, hl);
+        case 0x67: return LD_r8_r8(h, a);
+        case 0x68: return LD_r8_r8(l, b);
+        case 0x69: return LD_r8_r8(l, c);
+        case 0x6A: return LD_r8_r8(l, d);
+        case 0x6B: return LD_r8_r8(l, e);
+        case 0x6C: return LD_r8_r8(l, h);
+        case 0x6D: return LD_r8_r8(l, l);
+        case 0x6E: return LD_r8_m16(l, hl);
+        case 0x6F: return LD_r8_r8(l, a);
+        case 0x70: return LD_m16_r8(hl, b);
+        case 0x71: return LD_m16_r8(hl, c);
+        case 0x72: return LD_m16_r8(hl, d);
+        case 0x73: return LD_m16_r8(hl, e);
+        case 0x74: return LD_m16_r8(hl, h);
+        case 0x75: return LD_m16_r8(hl, l);
+        case 0x76: return HALT();
+        case 0x77: return LD_m16_r8(hl, a);
+        case 0x78: return LD_r8_r8(a, b);
+        case 0x79: return LD_r8_r8(a, c);
+        case 0x7A: return LD_r8_r8(a, d);
+        case 0x7B: return LD_r8_r8(a, e);
+        case 0x7C: return LD_r8_r8(a, h);
+        case 0x7D: return LD_r8_r8(a, l);
+        case 0x7E: return LD_r8_m16(a, hl);
+        case 0x7F: return LD_r8_r8(a, a);
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -168,6 +254,11 @@ auto Cpu::INC_r16(RegisterPair &reg_pair) -> u8 {
     return 2;
 }
 
+auto Cpu::INC_SP() -> u8 {
+    sp += 1;
+    return 2;
+}
+
 auto Cpu::DEC_r8(Register &reg) -> u8 {
     const u8 result = reg.value - 1;
     set_flag_value(Flag::Z, result == 0);
@@ -182,9 +273,29 @@ auto Cpu::DEC_r16(RegisterPair &reg_pair) -> u8 {
     return 2;
 }
 
+auto Cpu::DEC_SP() -> u8 {
+    sp -= 1;
+    return 2;
+}
+
 auto Cpu::LD_r8_n8(Register &reg) -> u8 {
     reg.value = fetch_unsigned_8bit();
     return 2;
+}
+
+auto Cpu::LD_r8_r8(Register &reg_into, Register reg_from)-> u8 {
+    reg_into.value = reg_from.value;
+    return 1;
+}
+
+auto Cpu::LD_r8_m16(Register &reg_into, RegisterPair reg_pair) -> u8 {
+    reg_into.value = read_mmu(reg_pair.value());
+    return 2;
+}
+
+auto Cpu::LD_m16_n8(RegisterPair &reg_pair) -> u8 {
+    write_mmu(reg_pair.value(), fetch_unsigned_8bit());
+    return 3;
 }
 
 auto Cpu::LD_r16_n16(RegisterPair &reg_pair) -> u8 {
@@ -212,6 +323,16 @@ auto Cpu::LD_n16_SP() -> u8 {
     return 5;
 }
 
+auto Cpu::LD_SP_n16() -> u8 {
+    sp = fetch_unsigned_16bit();
+    return 3;
+}
+
+auto Cpu::ADD_r8_r8(Register &reg_into, Register reg_from) -> u8 {
+    // todo:
+    return 1;
+}
+
 auto Cpu::ADD_HL_r16(const RegisterPair reg_pair) -> u8 {
     // is overflow from bit 11?
     const bool flag_h = (hl.value() & 0xFFF) + (reg_pair.value() & 0xFFF) > 0xFFF;
@@ -220,6 +341,20 @@ auto Cpu::ADD_HL_r16(const RegisterPair reg_pair) -> u8 {
     const bool flag_c = static_cast<u32>(hl.value()) + reg_pair.value() > 0xFFFF;
 
     hl.set(hl.value() + reg_pair.value());
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
+}
+
+auto Cpu::ADD_HL_SP() -> u8 {
+    // is overflow from bit 11?
+    const bool flag_h = (hl.value() & 0xFFF) + (sp & 0xFFF) > 0xFFF;
+
+    // is overflow from bit 15?
+    const bool flag_c = static_cast<u32>(hl.value()) + sp > 0xFFFF;
+
+    hl.set(hl.value() + sp);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, flag_h);
     set_flag_value(Flag::C, flag_c);
@@ -327,5 +462,32 @@ auto Cpu::DAA() -> u8 {
     }
     set_flag_value(Flag::Z, a.value == 0);
     set_flag_value(Flag::H, false);
+    return 1;
+}
+
+auto Cpu::CPL() -> u8 {
+    a.value = ~a.value;
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, true);
+    return 1;
+}
+
+// Complement carry flag
+auto Cpu::CCF() -> u8 {
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, !get_flag_value(Flag::C));
+    return 1;
+}
+
+auto Cpu::SCF() -> u8 {
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, true);
+    return 1;
+}
+
+auto Cpu::HALT() -> u8 {
+    ime = 0;
     return 1;
 }
