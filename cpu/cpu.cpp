@@ -176,6 +176,12 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x7D: return LD_r8_r8(a, l);
         case 0x7E: return LD_r8_m16(a, hl);
         case 0x7F: return LD_r8_r8(a, a);
+        case 0x80: return ADD_r8_r8(a, b);
+        case 0x81: return ADD_r8_r8(a, c);
+        case 0x82: return ADD_r8_r8(a, d);
+        case 0x83: return ADD_r8_r8(a, e);
+        case 0x84: return ADD_r8_r8(a, h);
+        case 0x85: return ADD_r8_r8(a, l);
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -329,7 +335,15 @@ auto Cpu::LD_SP_n16() -> u8 {
 }
 
 auto Cpu::ADD_r8_r8(Register &reg_into, Register reg_from) -> u8 {
-    // todo:
+    const auto flag_h = (reg_into.value & 0xF) + (reg_from.value & 0xF) > 0xF;
+    const auto flag_c = static_cast<u16>(reg_into.value) + reg_from.value > 0xFF;
+
+    reg_into.value += reg_from.value;
+
+    set_flag_value(Flag::Z, reg_into.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
     return 1;
 }
 

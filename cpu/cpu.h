@@ -73,6 +73,7 @@ private:
         auto LD_HLinc_A() -> u8;
 
         auto ADD_r8_r8(Register &reg_into, Register reg_from) -> u8;
+        auto ADD_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8;
         auto ADD_HL_r16(RegisterPair reg_pair) -> u8;
         auto ADD_HL_SP() -> u8;
 
