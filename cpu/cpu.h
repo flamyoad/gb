@@ -74,8 +74,13 @@ private:
 
         auto ADD_r8_r8(Register &reg_into, Register reg_from) -> u8;
         auto ADD_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8;
+        auto ADC_r8_r8(Register &reg_into, Register reg_from) -> u8;
+        auto ADC_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8;
         auto ADD_HL_r16(RegisterPair reg_pair) -> u8;
         auto ADD_HL_SP() -> u8;
+
+        auto SUB_r8(Register reg) -> u8;
+        auto SUB_m16(RegisterPair reg_pair) -> u8;
 
         auto RLCA() -> u8;
         auto RRCA() -> u8;

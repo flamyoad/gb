@@ -34,7 +34,6 @@ auto Cpu::tick() -> u32 {
 
 auto Cpu::get_flag_value(Flag flag) -> u8 {
     return f.value & static_cast<u8>(flag) ? 1 : 0;
-
 }
 
 auto Cpu::set_flag_value(Flag flag, const bool value) -> void {
@@ -182,6 +181,24 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x83: return ADD_r8_r8(a, e);
         case 0x84: return ADD_r8_r8(a, h);
         case 0x85: return ADD_r8_r8(a, l);
+        case 0x86: return ADD_r8_m16(a, hl);
+        case 0x87: return ADD_r8_r8(a, a);
+        case 0x88: return ADC_r8_r8(a, b);
+        case 0x89: return ADC_r8_r8(a, c);
+        case 0x8A: return ADC_r8_r8(a, d);
+        case 0x8B: return ADC_r8_r8(a, e);
+        case 0x8C: return ADC_r8_r8(a, h);
+        case 0x8D: return ADC_r8_r8(a, l);
+        case 0x8E: return ADC_r8_m16(a, hl);
+        case 0x8F: return ADC_r8_r8(a, a);
+        case 0x90: return SUB_r8(b);
+        case 0x91: return SUB_r8(c);
+        case 0x92: return SUB_r8(d);
+        case 0x93: return SUB_r8(e);
+        case 0x94: return SUB_r8(h);
+        case 0x95: return SUB_r8(l);
+        case 0x96: return SUB_m16(hl);
+        case 0x97: return SUB_r8(a);
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -347,6 +364,53 @@ auto Cpu::ADD_r8_r8(Register &reg_into, Register reg_from) -> u8 {
     return 1;
 }
 
+auto Cpu::ADD_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8 {
+    const auto mem = read_mmu(reg_pair_from.value());
+
+    const auto flag_h = (reg_into.value & 0xF) + (mem & 0xF) > 0xF;
+    const auto flag_c = static_cast<u16>(reg_into.value) + mem > 0xFF;
+
+    reg_into.value += mem;
+
+    set_flag_value(Flag::Z, reg_into.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+
+    return 2;
+}
+
+auto Cpu::ADC_r8_r8(Register &reg_into, Register reg_from) -> u8 {
+    const auto flag_c_value = get_flag_value(Flag::C);
+    const auto flag_h = (reg_into.value & 0xF) + (reg_from.value & 0xF) + flag_c_value > 0xF;
+    const auto flag_c = static_cast<u16>(reg_into.value) + reg_from.value + flag_c_value > 0xFF;
+
+    reg_into.value = reg_into.value + reg_from.value + flag_c_value;
+
+    set_flag_value(Flag::Z, reg_into.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+
+    return 1;
+}
+
+auto Cpu::ADC_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8 {
+    const auto flag_c_value = get_flag_value(Flag::C);
+    const auto mem = read_mmu(reg_pair_from.value());
+    const auto flag_h = (reg_into.value & 0xF) + (mem & 0xF) + flag_c_value > 0xF;
+    const auto flag_c = static_cast<u16>(reg_into.value) + mem + flag_c_value > 0xFF;
+
+    reg_into.value = reg_into.value + mem + flag_c_value;
+
+    set_flag_value(Flag::Z, reg_into.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+
+    return 2;
+}
+
 auto Cpu::ADD_HL_r16(const RegisterPair reg_pair) -> u8 {
     // is overflow from bit 11?
     const bool flag_h = (hl.value() & 0xFFF) + (reg_pair.value() & 0xFFF) > 0xFFF;
@@ -370,6 +434,31 @@ auto Cpu::ADD_HL_SP() -> u8 {
 
     hl.set(hl.value() + sp);
     set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
+}
+
+auto Cpu::SUB_r8(Register reg) -> u8 {
+    const auto flag_h = (a.value & 0xF) < (reg.value & 0xF);
+    const auto flag_c = a.value < reg.value;
+    a.value -= reg.value;
+
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 1;
+}
+
+auto Cpu::SUB_m16(RegisterPair reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto flag_h = (a.value & 0xF) < (mem & 0xF);
+    const auto flag_c = a.value < mem;
+    a.value -= mem;
+
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, true);
     set_flag_value(Flag::H, flag_h);
     set_flag_value(Flag::C, flag_c);
     return 2;
