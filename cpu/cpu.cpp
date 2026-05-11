@@ -199,6 +199,14 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x95: return SUB_r8(l);
         case 0x96: return SUB_m16(hl);
         case 0x97: return SUB_r8(a);
+        case 0x98: return SBC_r8(b);
+        case 0x99: return SBC_r8(c);
+        case 0x9A: return SBC_r8(d);
+        case 0x9B: return SBC_r8(e);
+        case 0x9C: return SBC_r8(h);
+        case 0x9D: return SBC_r8(l);
+        // case 0x9E: return SBC_r16(hl);
+        case 0x9F: return SBC_r8(a);
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -462,6 +470,20 @@ auto Cpu::SUB_m16(RegisterPair reg_pair) -> u8 {
     set_flag_value(Flag::H, flag_h);
     set_flag_value(Flag::C, flag_c);
     return 2;
+}
+
+auto Cpu::SBC_r8(Register reg) -> u8 {
+    const auto flag_c_value = get_flag_value(Flag::C);
+    const auto flag_h = (a.value & 0xF) < ((reg.value & 0xF) + flag_c_value);
+    const auto flag_c = a.value < (reg.value + flag_c_value);
+
+    a.value = a.value - reg.value - flag_c_value;
+
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 1;
 }
 
 auto Cpu::RLCA() -> u8 {
