@@ -205,7 +205,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x9B: return SBC_r8(e);
         case 0x9C: return SBC_r8(h);
         case 0x9D: return SBC_r8(l);
-        // case 0x9E: return SBC_r16(hl);
+        case 0x9E: return SBC_m16(hl);
         case 0x9F: return SBC_r8(a);
 
         case 0xCB:
@@ -484,6 +484,22 @@ auto Cpu::SBC_r8(Register reg) -> u8 {
     set_flag_value(Flag::H, flag_h);
     set_flag_value(Flag::C, flag_c);
     return 1;
+}
+
+auto Cpu::SBC_m16(RegisterPair reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto flag_c_value = get_flag_value(Flag::C);
+
+    const auto flag_h = (a.value & 0xF) < ((mem & 0xF) + flag_c_value);
+    const auto flag_c = a.value < (mem + flag_c_value);
+
+    a.value = a.value - mem - flag_c_value;
+
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
 }
 
 auto Cpu::RLCA() -> u8 {

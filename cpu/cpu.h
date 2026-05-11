@@ -82,6 +82,14 @@ private:
         auto SUB_r8(Register reg) -> u8;
         auto SUB_m16(RegisterPair reg_pair) -> u8;
         auto SBC_r8(Register reg) -> u8;
+        auto SBC_m16(RegisterPair reg_pair) -> u8;
+
+        auto AND_r8(Register reg) -> u8;
+        auto AND_m16(RegisterPair reg_pair) -> u8;
+        auto XOR_r8(Register reg) -> u8;
+        auto XOR_m16(RegisterPair reg_pair) -> u8;
+        auto OR_r8(Register reg) -> u8;
+        auto OR_m16(RegisterPair reg_pair) -> u8;
 
         auto RLCA() -> u8;
         auto RRCA() -> u8;
