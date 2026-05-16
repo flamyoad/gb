@@ -79,7 +79,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x1D: return DEC_r8(e);
         case 0x1E: return LD_r8_n8(e);
         case 0x1F: return RRA();
-        case 0x20: return JR_cc_s8(JumpCondition(Flag::Z, Condition::isZero));
+        case 0x20: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isZero));
         case 0x21: return LD_r16_n16(de);
         case 0x22: return LD_HLinc_A();
         case 0x23: return INC_r16(hl);
@@ -87,7 +87,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x25: return DEC_r8(h);
         case 0x26: return LD_r8_n8(h);
         case 0x27: return DAA();
-        case 0x28: return JR_cc_s8(JumpCondition(Flag::Z, Condition::isOne));
+        case 0x28: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isOne));
         case 0x29: return ADD_HL_r16(hl);
         case 0x2A: return LD_A_HLinc();
         case 0x2B: return DEC_r16(hl);
@@ -95,7 +95,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x2D: return DEC_r8(l);
         case 0x2E: return LD_r8_n8(e);
         case 0x2F: return CPL();
-        case 0x30: return JR_cc_s8(JumpCondition(Flag::C, Condition::isZero));
+        case 0x30: return JR_cc_s8(FlagCondition(Flag::C, Condition::isZero));
         case 0x31: return LD_SP_n16();
         case 0x32: return LD_HLdec_A();
         case 0x33: return INC_SP();
@@ -103,7 +103,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x35: return DEC_r16(hl);
         case 0x36: return LD_m16_n8(hl);
         case 0x37: return SCF();
-        case 0x38: return JR_cc_s8(JumpCondition(Flag::C, Condition::isOne));
+        case 0x38: return JR_cc_s8(FlagCondition(Flag::C, Condition::isOne));
         case 0x39: return ADD_HL_SP();
         case 0x3A: return LD_A_HLdec();
         case 0x3B: return DEC_SP();
@@ -207,6 +207,42 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x9D: return SBC_r8(l);
         case 0x9E: return SBC_m16(hl);
         case 0x9F: return SBC_r8(a);
+        case 0xA0: return AND_r8(b);
+        case 0xA2: return AND_r8(d);
+        case 0xA3: return AND_r8(e);
+        case 0xA4: return AND_r8(h);
+        case 0xA5: return AND_r8(l);
+        case 0xA1: return AND_r8(c);
+        case 0xA6: return AND_m16(hl);
+        case 0xA7: return AND_r8(a);
+        case 0xA8: return XOR_r8(b);
+        case 0xA9: return XOR_r8(c);
+        case 0xAA: return XOR_r8(d);
+        case 0xAB: return XOR_r8(e);
+        case 0xAC: return XOR_r8(h);
+        case 0xAD: return XOR_r8(l);
+        case 0xAE: return XOR_m16(hl);
+        case 0xAF: return XOR_r8(a);
+        case 0xB0: return OR_r8(b);
+        case 0xB1: return OR_r8(c);
+        case 0xB2: return OR_r8(d);
+        case 0xB3: return OR_r8(e);
+        case 0xB4: return OR_r8(h);
+        case 0xB5: return OR_r8(l);
+        case 0xB6: return OR_m16(hl);
+        case 0xB7: return OR_r8(a);
+        case 0xB8: return CP_r8(b);
+        case 0xB9: return CP_r8(c);
+        case 0xBA: return CP_r8(d);
+        case 0xBB: return CP_r8(e);
+        case 0xBC: return CP_r8(h);
+        case 0xBD: return CP_r8(l);
+        case 0xBE: return CP_m16(hl);
+        case 0xBF: return CP_r8(a);
+        case 0xC0: return RET(FlagCondition(Flag::Z, Condition::isNotZero));
+        case 0xC1: return POP(bc);
+        case 0xC2: return JP_cc_n16(FlagCondition(Flag::Z, Condition::isNotZero));
+        case 0xC3: return JP_n16();
 
         case 0xCB:
             return execute_cb_opcode(opcode);
@@ -262,13 +298,27 @@ auto Cpu::JR_s8() -> u8 {
 
 // If flag is 0 or 1 (depends on condition), jump s8 steps from the current address stored in the program counter (PC).
 // If not, the instruction following the current JP instruction is executed (as usual).
-auto Cpu::JR_cc_s8(JumpCondition cc) -> u8 {
+auto Cpu::JR_cc_s8(FlagCondition cc) -> u8 {
     if (cc.is_valid(f)) {
         return JR_s8();
     }
 
     fetch_unsigned_8bit();
     return 2;
+}
+
+auto Cpu::JP_n16() -> u8 {
+    pc = fetch_unsigned_16bit();
+    return 4;
+}
+
+auto Cpu::JP_cc_n16(FlagCondition cc) -> u8 {
+    if (cc.is_valid(f)) {
+        return JP_n16();
+    }
+
+    fetch_unsigned_16bit(); // Discard to advance PC
+    return 3;
 }
 
 auto Cpu::INC_r8(Register &reg) -> u8 {
@@ -502,6 +552,86 @@ auto Cpu::SBC_m16(RegisterPair reg_pair) -> u8 {
     return 2;
 }
 
+auto Cpu::AND_r8(Register reg) -> u8 {
+    a.value &= reg.value;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, true);
+    set_flag_value(Flag::C, false);
+    return 1;
+}
+
+auto Cpu::AND_m16(RegisterPair reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    a.value &= mem;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, true);
+    set_flag_value(Flag::C, false);
+    return 2;
+}
+
+auto Cpu::XOR_r8(Register reg) -> u8 {
+    a.value ^= reg.value;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 1;
+}
+
+auto Cpu::XOR_m16(RegisterPair reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    a.value ^= mem;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 2;
+}
+
+auto Cpu::OR_r8(Register reg) -> u8 {
+    a.value |= reg.value;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 1;
+}
+
+auto Cpu::OR_m16(RegisterPair reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    a.value |= mem;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 2;
+}
+
+auto Cpu::CP_r8(Register reg) -> u8 {
+    const auto flag_h = (a.value & 0xF) < (reg.value & 0xF);
+    const auto flag_c = a.value < reg.value;
+    const auto result = a.value - reg.value;
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 1;
+}
+
+auto Cpu::CP_m16(RegisterPair reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto flag_h = (a.value & 0xF) < (mem & 0xF);
+    const auto flag_c = a.value < mem;
+    const auto result = a.value - mem;
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
+}
+
 auto Cpu::RLCA() -> u8 {
     const u8 reg_a_msb = (a.value >> 7 & 0x1);
     a.value = a.value << 1 | a.value >> 7;
@@ -626,6 +756,23 @@ auto Cpu::SCF() -> u8 {
     set_flag_value(Flag::H, false);
     set_flag_value(Flag::C, true);
     return 1;
+}
+
+auto Cpu::RET(FlagCondition cc) -> u8 {
+    if (!cc.is_valid(f)) {
+        return 2;
+    }
+    const auto lsb = read_mmu(sp++);
+    const auto msb = read_mmu(sp++);
+    pc = (static_cast<u16>(msb) << 8) | lsb;
+    return 5;
+}
+
+auto Cpu::POP(RegisterPair reg_pair) -> u8 {
+    const auto lsb = read_mmu(sp++);
+    const auto msb = read_mmu(sp++);
+    reg_pair.set((static_cast<u16>(msb) << 8) | lsb);
+    return 3;
 }
 
 auto Cpu::HALT() -> u8 {

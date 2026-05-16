@@ -3,6 +3,7 @@ add_library(cpu
         cpu.cpp
         register.h
         register.cpp
-        jump_condition.h)
+        flag_condition.h
+)
 
 target_include_directories(cpu PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

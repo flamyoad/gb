@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "jump_condition.h"
+#include "flag_condition.h"
 #include "register.h"
 #include "../common_types.h"
 
@@ -51,7 +51,9 @@ private:
         auto NOP() -> u8;
         auto STOP() -> u8;
         auto JR_s8() -> u8;
-        auto JR_cc_s8(JumpCondition cc) -> u8;
+        auto JR_cc_s8(FlagCondition cc) -> u8;
+        auto JP_n16() -> u8;
+        auto JP_cc_n16(FlagCondition cc) -> u8;
         auto INC_r8(Register &reg) -> u8;
         auto INC_r16(RegisterPair &reg_pair) -> u8;
         auto INC_SP() -> u8;
@@ -91,6 +93,9 @@ private:
         auto OR_r8(Register reg) -> u8;
         auto OR_m16(RegisterPair reg_pair) -> u8;
 
+        auto CP_r8(Register reg) -> u8;
+        auto CP_m16(RegisterPair reg_pair) -> u8;
+
         auto RLCA() -> u8;
         auto RRCA() -> u8;
         auto RLA() -> u8;
@@ -101,5 +106,7 @@ private:
         auto CCF() -> u8;
         auto SCF() -> u8;
 
+        auto RET(FlagCondition cc) -> u8;
+        auto POP(RegisterPair reg_pair) -> u8;
         auto HALT() -> u8;
 };

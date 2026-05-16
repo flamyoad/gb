@@ -9,18 +9,22 @@
 enum class Condition {
     isOne, // flag is 1
     isZero, // flag is 0
+    isNotZero,
 };
 
-class JumpCondition {
+class FlagCondition {
 public:
-    JumpCondition(const Flag flag, const Condition condition): flag(flag), condition(condition) {}
+    FlagCondition(const Flag flag, const Condition condition): flag(flag), condition(condition) {}
 
     auto is_valid(FlagRegister f) -> bool {
-        auto flag_value = f.value & static_cast<u8>(flag) ? 1 : 0;
+        const auto flag_value = f.value & static_cast<u8>(flag) ? 1 : 0;
         if (condition == Condition::isZero && flag_value == 0) {
             return true;
         }
         if (condition == Condition::isOne && flag_value == 1) {
+            return true;
+        }
+        if (condition == Condition::isNotZero && flag_value != 0) {
             return true;
         }
         return false;
