@@ -7,9 +7,8 @@
 #include "register.h"
 
 enum class Condition {
-    isOne, // flag is 1
-    isZero, // flag is 0
-    isNotZero,
+    isSet, // flag is 1
+    isNotSet, // flag is 0
 };
 
 class FlagCondition {
@@ -18,13 +17,10 @@ public:
 
     auto is_valid(FlagRegister f) -> bool {
         const auto flag_value = f.value & static_cast<u8>(flag) ? 1 : 0;
-        if (condition == Condition::isZero && flag_value == 0) {
+        if (condition == Condition::isNotSet && flag_value == 0) {
             return true;
         }
-        if (condition == Condition::isOne && flag_value == 1) {
-            return true;
-        }
-        if (condition == Condition::isNotZero && flag_value != 0) {
+        if (condition == Condition::isSet && flag_value == 1) {
             return true;
         }
         return false;

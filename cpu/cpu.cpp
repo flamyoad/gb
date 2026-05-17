@@ -2,6 +2,8 @@
 // Created by Ng Zhen Hao on 21/03/2026.
 //
 
+#include <cassert>
+
 #include "cpu.h"
 #include "../gameboy.h"
 #include "../common_types.h"
@@ -79,7 +81,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x1D: return DEC_r8(e);
         case 0x1E: return LD_r8_n8(e);
         case 0x1F: return RRA();
-        case 0x20: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isZero));
+        case 0x20: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isNotSet));
         case 0x21: return LD_r16_n16(de);
         case 0x22: return LD_HLinc_A();
         case 0x23: return INC_r16(hl);
@@ -87,7 +89,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x25: return DEC_r8(h);
         case 0x26: return LD_r8_n8(h);
         case 0x27: return DAA();
-        case 0x28: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isOne));
+        case 0x28: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isSet));
         case 0x29: return ADD_HL_r16(hl);
         case 0x2A: return LD_A_HLinc();
         case 0x2B: return DEC_r16(hl);
@@ -95,7 +97,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x2D: return DEC_r8(l);
         case 0x2E: return LD_r8_n8(e);
         case 0x2F: return CPL();
-        case 0x30: return JR_cc_s8(FlagCondition(Flag::C, Condition::isZero));
+        case 0x30: return JR_cc_s8(FlagCondition(Flag::C, Condition::isNotSet));
         case 0x31: return LD_SP_n16();
         case 0x32: return LD_HLdec_A();
         case 0x33: return INC_SP();
@@ -103,7 +105,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x35: return DEC_r16(hl);
         case 0x36: return LD_m16_n8(hl);
         case 0x37: return SCF();
-        case 0x38: return JR_cc_s8(FlagCondition(Flag::C, Condition::isOne));
+        case 0x38: return JR_cc_s8(FlagCondition(Flag::C, Condition::isSet));
         case 0x39: return ADD_HL_SP();
         case 0x3A: return LD_A_HLdec();
         case 0x3B: return DEC_SP();
@@ -239,13 +241,38 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xBD: return CP_r8(l);
         case 0xBE: return CP_m16(hl);
         case 0xBF: return CP_r8(a);
-        case 0xC0: return RET(FlagCondition(Flag::Z, Condition::isNotZero));
+        case 0xC0: return RET(FlagCondition(Flag::Z, Condition::isNotSet));
         case 0xC1: return POP(bc);
-        case 0xC2: return JP_cc_n16(FlagCondition(Flag::Z, Condition::isNotZero));
+        case 0xC2: return JP_cc_n16(FlagCondition(Flag::Z, Condition::isNotSet));
         case 0xC3: return JP_n16();
-
-        case 0xCB:
-            return execute_cb_opcode(opcode);
+        case 0xC4: return CALL_cc(FlagCondition(Flag::Z, Condition::isNotSet));
+        case 0xC5: return PUSH(bc);
+        case 0xC6: return ADD_r8_m8(a);
+        case 0xC7: return RST(0);
+        case 0xC8: return RET(FlagCondition(Flag::Z, Condition::isSet));
+        case 0xC9: return RET();
+        case 0xCA: return JP_cc_n16(FlagCondition(Flag::Z, Condition::isSet));
+        case 0xCB: return execute_cb_opcode(opcode);
+        case 0xCC: return CALL_cc(FlagCondition(Flag::Z, Condition::isSet));
+        case 0xCD: return CALL();
+        case 0xCE: return ADC_r8_n8(a);
+        case 0xCF: return RST(1);
+        case 0xD0: return RET(FlagCondition(Flag::C, Condition::isNotSet));
+        case 0xD1: return POP(de);
+        case 0xD2: return JP_cc_n16(FlagCondition(Flag::C, Condition::isNotSet));
+        case 0xD3: break;
+        case 0xD4: return CALL_cc(FlagCondition(Flag::C, Condition::isNotSet));
+        case 0xD5: return PUSH(de);
+        case 0xD6: return SUB_n8();
+        case 0xD7: return RST(2);
+        case 0xD8: return RET(FlagCondition(Flag::C, Condition::isSet));
+        case 0xD9: return RETI();
+        case 0xDA: return JP_cc_n16(FlagCondition(Flag::C, Condition::isSet));
+        case 0xDB: break;
+        case 0xDC: return CALL_cc(FlagCondition(Flag::C, Condition::isSet));
+        case 0xDD: break;
+        case 0xDE: return SBC_n8();
+        case 0xDF: return RST(3);
     }
 }
 
@@ -422,6 +449,20 @@ auto Cpu::ADD_r8_r8(Register &reg_into, Register reg_from) -> u8 {
     return 1;
 }
 
+auto Cpu::ADD_r8_m8(Register &reg_into) -> u8 {
+    const auto mem = fetch_unsigned_8bit();
+    const auto flag_h = (reg_into.value & 0xF) + (mem & 0xF) > 0xF;
+    const auto flag_c = static_cast<u16>(reg_into.value) + mem > 0xFF;
+
+    reg_into.value += mem;
+
+    set_flag_value(Flag::Z, reg_into.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
+}
+
 auto Cpu::ADD_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8 {
     const auto mem = read_mmu(reg_pair_from.value());
 
@@ -451,6 +492,22 @@ auto Cpu::ADC_r8_r8(Register &reg_into, Register reg_from) -> u8 {
     set_flag_value(Flag::C, flag_c);
 
     return 1;
+}
+
+auto Cpu::ADC_r8_n8(Register &reg_into) -> u8 {
+    const auto n8 = fetch_unsigned_8bit();
+    const auto flag_c_value = get_flag_value(Flag::C);
+    const auto flag_h = (reg_into.value & 0xF) + (n8 & 0xF) + flag_c_value > 0xF;
+    const auto flag_c = static_cast<u16>(reg_into.value) + n8 + flag_c_value > 0xFF;
+
+    reg_into.value = reg_into.value + n8 + flag_c_value;
+
+    set_flag_value(Flag::Z, reg_into.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+
+    return 2;
 }
 
 auto Cpu::ADC_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8 {
@@ -522,6 +579,19 @@ auto Cpu::SUB_m16(RegisterPair reg_pair) -> u8 {
     return 2;
 }
 
+auto Cpu::SUB_n8() -> u8 {
+    const auto mem = fetch_unsigned_8bit();
+    const auto flag_h = (a.value & 0xF) < (mem & 0xF);
+    const auto flag_c = a.value < mem;
+    a.value -= mem;
+
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
+}
+
 auto Cpu::SBC_r8(Register reg) -> u8 {
     const auto flag_c_value = get_flag_value(Flag::C);
     const auto flag_h = (a.value & 0xF) < ((reg.value & 0xF) + flag_c_value);
@@ -538,6 +608,22 @@ auto Cpu::SBC_r8(Register reg) -> u8 {
 
 auto Cpu::SBC_m16(RegisterPair reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
+    const auto flag_c_value = get_flag_value(Flag::C);
+
+    const auto flag_h = (a.value & 0xF) < ((mem & 0xF) + flag_c_value);
+    const auto flag_c = a.value < (mem + flag_c_value);
+
+    a.value = a.value - mem - flag_c_value;
+
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
+}
+
+auto Cpu::SBC_n8() -> u8 {
+    const auto mem = fetch_unsigned_8bit();
     const auto flag_c_value = get_flag_value(Flag::C);
 
     const auto flag_h = (a.value & 0xF) < ((mem & 0xF) + flag_c_value);
@@ -758,14 +844,24 @@ auto Cpu::SCF() -> u8 {
     return 1;
 }
 
-auto Cpu::RET(FlagCondition cc) -> u8 {
-    if (!cc.is_valid(f)) {
-        return 2;
-    }
+auto Cpu::RET() -> u8 {
     const auto lsb = read_mmu(sp++);
     const auto msb = read_mmu(sp++);
     pc = (static_cast<u16>(msb) << 8) | lsb;
-    return 5;
+    return 4;
+}
+
+auto Cpu::RET(FlagCondition cc) -> u8 {
+    if (cc.is_valid(f)) {
+        RET();
+        return 5;
+    }
+    return 2;
+}
+
+auto Cpu::RETI() -> u8 {
+    ime = 1;
+    return RET();
 }
 
 auto Cpu::POP(RegisterPair reg_pair) -> u8 {
@@ -773,6 +869,41 @@ auto Cpu::POP(RegisterPair reg_pair) -> u8 {
     const auto msb = read_mmu(sp++);
     reg_pair.set((static_cast<u16>(msb) << 8) | lsb);
     return 3;
+}
+
+auto Cpu::PUSH(RegisterPair reg_pair) -> u8 {
+    const auto msb = static_cast<u8>(reg_pair.value() >> 8);
+    const auto lsb = static_cast<u8>(reg_pair.value() & 0xFF);
+    write_mmu(--sp, msb);
+    write_mmu(--sp, lsb);
+    return 4;
+}
+
+
+auto Cpu::CALL() -> u8 {
+    const auto address = fetch_unsigned_16bit();
+    write_mmu(--sp, static_cast<u8>(pc >> 8));
+    write_mmu(--sp, static_cast<u8>(pc));
+    pc = address;
+    return 6;
+}
+
+auto Cpu::CALL_cc(FlagCondition cc) -> u8 {
+    if (cc.is_valid(f)) {
+        return CALL();
+    } else {
+        fetch_unsigned_16bit();
+        return 3;
+    }
+}
+
+auto Cpu::RST(u8 rst_number) -> u8 {
+    assert(rst_number <= 7);
+
+    write_mmu(--sp, static_cast<u8>(pc >> 8));
+    write_mmu(--sp, static_cast<u8>(pc & 0xFF));
+    pc = rst_number * 0x08; // PC = unsigned_16(lsb=n, msb=0x00)
+    return 4;
 }
 
 auto Cpu::HALT() -> u8 {

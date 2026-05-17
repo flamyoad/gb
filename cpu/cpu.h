@@ -75,16 +75,20 @@ private:
         auto LD_HLinc_A() -> u8;
 
         auto ADD_r8_r8(Register &reg_into, Register reg_from) -> u8;
+        auto ADD_r8_m8(Register &reg_into) -> u8;
         auto ADD_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8;
         auto ADC_r8_r8(Register &reg_into, Register reg_from) -> u8;
+        auto ADC_r8_n8(Register &reg_into) -> u8;
         auto ADC_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8;
         auto ADD_HL_r16(RegisterPair reg_pair) -> u8;
         auto ADD_HL_SP() -> u8;
 
         auto SUB_r8(Register reg) -> u8;
         auto SUB_m16(RegisterPair reg_pair) -> u8;
+        auto SUB_n8() -> u8;
         auto SBC_r8(Register reg) -> u8;
         auto SBC_m16(RegisterPair reg_pair) -> u8;
+        auto SBC_n8() -> u8;
 
         auto AND_r8(Register reg) -> u8;
         auto AND_m16(RegisterPair reg_pair) -> u8;
@@ -106,7 +110,13 @@ private:
         auto CCF() -> u8;
         auto SCF() -> u8;
 
+        auto RET() -> u8;
         auto RET(FlagCondition cc) -> u8;
+        auto RETI() -> u8;
         auto POP(RegisterPair reg_pair) -> u8;
+        auto PUSH(RegisterPair reg_pair) -> u8;
+        auto CALL() -> u8;
+        auto CALL_cc(FlagCondition cc) -> u8;
+        auto RST(u8 rst_number) -> u8;
         auto HALT() -> u8;
 };
