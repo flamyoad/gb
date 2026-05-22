@@ -273,6 +273,17 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xDD: break;
         case 0xDE: return SBC_n8();
         case 0xDF: return RST(3);
+        case 0xE0: return LDH_a8_r8(a);
+        case 0xE1: return POP(hl);
+        case 0xE2: return LDH_m8_r8(c, a);
+
+        case 0xEA: return LD_a16_r8(a);
+
+        case 0xF0: return LDH_r8_a8(a);
+
+        case 0xF2: return LDH_r8_m8(a, c);
+
+        case 0xFA: return LD_r8_a16(a);
     }
 }
 
@@ -396,9 +407,14 @@ auto Cpu::LD_r8_r8(Register &reg_into, Register reg_from)-> u8 {
     return 1;
 }
 
-auto Cpu::LD_r8_m16(Register &reg_into, RegisterPair reg_pair) -> u8 {
-    reg_into.value = read_mmu(reg_pair.value());
+auto Cpu::LD_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8 {
+    reg_into.value = read_mmu(reg_pair_from.value());
     return 2;
+}
+
+auto Cpu::LD_r8_a16(Register &reg) -> u8 {
+    reg.value = read_mmu(fetch_unsigned_16bit());
+    return 4;
 }
 
 auto Cpu::LD_m16_n8(RegisterPair &reg_pair) -> u8 {
@@ -422,6 +438,11 @@ auto Cpu::LD_r8_r16(Register &reg, RegisterPair reg_pair) -> u8 {
     return 2;
 }
 
+auto Cpu::LD_a16_r8(Register reg) -> u8 {
+    write_mmu(fetch_unsigned_16bit(), reg.value);
+    return 4;
+}
+
 auto Cpu::LD_n16_SP() -> u8 {
     const u16 n16 = fetch_unsigned_16bit();
     const u8 sp_lsb = sp & 0xFF;
@@ -434,6 +455,27 @@ auto Cpu::LD_n16_SP() -> u8 {
 auto Cpu::LD_SP_n16() -> u8 {
     sp = fetch_unsigned_16bit();
     return 3;
+}
+
+auto Cpu::LDH_a8_r8(Register reg) -> u8 {
+    const auto byte = fetch_unsigned_8bit();
+    write_mmu(0xFF00 | byte, reg.value);
+    return 3;
+}
+
+auto Cpu::LDH_m8_r8(Register reg_into, Register reg_from) -> u8 {
+    write_mmu(0xFF00 | reg_into.value, reg_from.value);
+    return 2;
+}
+
+auto Cpu::LDH_r8_a8(Register &reg_into) -> u8 {
+    reg_into.value = read_mmu(0xFF00 | fetch_unsigned_8bit());
+    return 3;
+}
+
+auto Cpu::LDH_r8_m8(Register &reg_into, Register reg_from) -> u8 {
+    reg_into.value = read_mmu(0xFF00 | reg_from.value);
+    return 2;
 }
 
 auto Cpu::ADD_r8_r8(Register &reg_into, Register reg_from) -> u8 {

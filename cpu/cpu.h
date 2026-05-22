@@ -45,9 +45,12 @@ private:
 
         // r8 = register,
         // r16 = register pair
-        // n8 = 1-byte immediate data,
-        // n16 = 2-byte immediate data
-        // m16 = memory location specified by register pair
+        // n8 = 1-byte immediate data obtained from PC
+        // n16 = 2-byte immediate data obtained from PC
+        // m8 = content of main memory by reading address specified by register
+        // m16 = content of main memory by reading address specified by register pair
+        // a8 = content of main memory by reading address specified by the 1-byte immediate data
+        // a16 = content of main memory by reading address specified by the 2-byte immediate data
         auto NOP() -> u8;
         auto STOP() -> u8;
         auto JR_s8() -> u8;
@@ -63,6 +66,7 @@ private:
         auto LD_r8_n8(Register &reg) -> u8;
         auto LD_r8_r8(Register &reg_into, Register reg_from) -> u8;
         auto LD_r8_m16(Register &reg_into, RegisterPair reg_pair) -> u8;
+        auto LD_r8_a16(Register &reg) -> u8;
         auto LD_m16_n8(RegisterPair &reg_pair) -> u8;
         auto LD_r16_n16(RegisterPair &reg_pair) -> u8;
         auto LD_m16_r8(RegisterPair &reg_pair, Register reg) -> u8;
@@ -73,6 +77,11 @@ private:
         auto LD_HLdec_A() -> u8;
         auto LD_A_HLinc() -> u8;
         auto LD_HLinc_A() -> u8;
+        auto LDH_a8_r8(Register reg) -> u8;
+        auto LDH_m8_r8(Register reg_into, Register reg_from) -> u8;
+        auto LDH_r8_a8(Register &reg) -> u8;
+        auto LDH_r8_m8(Register &reg_into, Register reg_from) -> u8;
+        auto LD_a16_r8(Register reg) -> u8;
 
         auto ADD_r8_r8(Register &reg_into, Register reg_from) -> u8;
         auto ADD_r8_m8(Register &reg_into) -> u8;
