@@ -26,11 +26,21 @@ Cpu::Cpu(Gameboy &gb) :
     e.value = 0xD8;
     h.value = 0x01;
     l.value = 0x4D;
+
+    ime = 0;
+    halted = false;
+    ime_next = false;
 }
 
 auto Cpu::tick() -> u32 {
     auto opcode = fetch_unsigned_8bit();
     auto cycle_count = execute(opcode);
+
+    if (ime_next) {
+        ime_next = false;
+        ime = 1;
+    }
+
     return cycle_count;
 }
 
@@ -276,14 +286,35 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xE0: return LDH_a8_r8(a);
         case 0xE1: return POP(hl);
         case 0xE2: return LDH_m8_r8(c, a);
-
+        case 0xE3: break;
+        case 0xE4: break;
+        case 0xE5: return PUSH(hl);
+        case 0xE6: return AND_n8();
+        case 0xE7: return RST(4);
+        case 0xE8: return ADD_SP_s8();
+        case 0xE9: return JP_r16(hl);
         case 0xEA: return LD_a16_r8(a);
-
+        case 0xEB: break;
+        case 0xEC: break;
+        case 0xED: break;
+        case 0xEE: return XOR_n8();
+        case 0xEF: return RST(5);
         case 0xF0: return LDH_r8_a8(a);
-
+        case 0xF1: return POP(af);
         case 0xF2: return LDH_r8_m8(a, c);
-
+        case 0xF3: return DI();
+        case 0xF4: break;
+        case 0xF5: return PUSH(af);
+        case 0xF6: return OR_n8();
+        case 0xF7: return RST(6);
+        case 0xF8: return LD_HL_SP_s8();
+        case 0xF9: return LD_SP_r16(hl);
         case 0xFA: return LD_r8_a16(a);
+        case 0xFB: return EI();
+        case 0xFC: break;
+        case 0xFD: break;
+        case 0xFE: return CP_n8();
+        case 0xFF: return RST(7);
     }
 }
 
@@ -357,6 +388,11 @@ auto Cpu::JP_cc_n16(FlagCondition cc) -> u8 {
 
     fetch_unsigned_16bit(); // Discard to advance PC
     return 3;
+}
+
+auto Cpu::JP_r16(RegisterPair reg_pair) -> u8 {
+    pc = reg_pair.value();
+    return 1;
 }
 
 auto Cpu::INC_r8(Register &reg) -> u8 {
@@ -455,6 +491,24 @@ auto Cpu::LD_n16_SP() -> u8 {
 auto Cpu::LD_SP_n16() -> u8 {
     sp = fetch_unsigned_16bit();
     return 3;
+}
+
+auto Cpu::LD_SP_r16(RegisterPair reg_pair) -> u8 {
+    sp = reg_pair.value();
+    return 2;
+}
+
+// Load to the HL register, 16-bit data calculated by adding the signed 8-bit operand e to the 16-bit value of the SP register.
+auto Cpu::LD_HL_SP_s8() -> u8 {
+    const auto s8 = fetch_signed_8bit();
+    const auto flag_h = (sp & 0xF) + (s8 & 0xF) > 0xF;
+    const auto flag_c = (sp & 0xFF) + (s8 & 0xFF) > 0xFF;
+    hl.set(sp + s8);
+    set_flag_value(Flag::Z, false);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
 }
 
 auto Cpu::LDH_a8_r8(Register reg) -> u8 {
@@ -596,6 +650,18 @@ auto Cpu::ADD_HL_SP() -> u8 {
     return 2;
 }
 
+auto Cpu::ADD_SP_s8() -> u8 {
+    const auto s8 = fetch_signed_8bit();
+    const bool flag_h = (sp & 0xF) + (s8 & 0xF) > 0xF;
+    const bool flag_c = (sp & 0xFF) + (s8 & 0xFF) > 0xFF;
+    sp += s8;
+    set_flag_value(Flag::Z, false);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 4;
+}
+
 auto Cpu::SUB_r8(Register reg) -> u8 {
     const auto flag_h = (a.value & 0xF) < (reg.value & 0xF);
     const auto flag_c = a.value < reg.value;
@@ -689,6 +755,15 @@ auto Cpu::AND_r8(Register reg) -> u8 {
     return 1;
 }
 
+auto Cpu::AND_n8() -> u8 {
+    a.value &= fetch_unsigned_8bit();
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, true);
+    set_flag_value(Flag::C, false);
+    return 2;
+}
+
 auto Cpu::AND_m16(RegisterPair reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
     a.value &= mem;
@@ -708,6 +783,15 @@ auto Cpu::XOR_r8(Register reg) -> u8 {
     return 1;
 }
 
+auto Cpu::XOR_n8() -> u8 {
+    a.value ^= fetch_unsigned_8bit();
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 2;
+}
+
 auto Cpu::XOR_m16(RegisterPair reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
     a.value ^= mem;
@@ -720,6 +804,15 @@ auto Cpu::XOR_m16(RegisterPair reg_pair) -> u8 {
 
 auto Cpu::OR_r8(Register reg) -> u8 {
     a.value |= reg.value;
+    set_flag_value(Flag::Z, a.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 1;
+}
+
+auto Cpu::OR_n8() -> u8 {
+    a.value |= fetch_unsigned_8bit();
     set_flag_value(Flag::Z, a.value == 0);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
@@ -746,6 +839,18 @@ auto Cpu::CP_r8(Register reg) -> u8 {
     set_flag_value(Flag::H, flag_h);
     set_flag_value(Flag::C, flag_c);
     return 1;
+}
+
+auto Cpu::CP_n8() -> u8 {
+    const auto n8 = fetch_unsigned_8bit();
+    const auto flag_h = (a.value & 0xF) < (n8 & 0xF);
+    const auto flag_c = a.value < n8;
+    const auto result = a.value - n8;
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, flag_h);
+    set_flag_value(Flag::C, flag_c);
+    return 2;
 }
 
 auto Cpu::CP_m16(RegisterPair reg_pair) -> u8 {
@@ -949,6 +1054,20 @@ auto Cpu::RST(u8 rst_number) -> u8 {
 }
 
 auto Cpu::HALT() -> u8 {
+    // ime = 0; // ??????!?!? https://gekkio.fi/files/gb-docs/gbctr.pdf
+    halted = true; // todo: handle interrupt in tick()
+    return 1;
+}
+
+// Disables interrupt handling by setting IME=0 and cancelling any scheduled effects of the EI instruction if any
+auto Cpu::DI() -> u8 {
     ime = 0;
+    ime_next = false;
+    return 1;
+}
+
+// Schedules interrupt handling to be enabled after the next machine cycle.
+auto Cpu::EI() -> u8 {
+    ime_next = true;
     return 1;
 }

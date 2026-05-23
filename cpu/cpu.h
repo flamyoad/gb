@@ -28,6 +28,8 @@ private:
         u16 pc;
         u16 sp;
         u8 ime; // Interrupt Master Enable flag
+        bool ime_next;
+        bool halted;
 
         auto get_flag_value(Flag flag) -> u8;
         auto set_flag_value(Flag flag, bool flag_value) -> void;
@@ -45,8 +47,9 @@ private:
 
         // r8 = register,
         // r16 = register pair
-        // n8 = 1-byte immediate data obtained from PC
-        // n16 = 2-byte immediate data obtained from PC
+        // n8 = Unsigned 1-byte immediate data obtained from PC
+        // n16 = Unsigned 2-byte immediate data obtained from PC
+        // s8 = Signed 1-byte  immediate data obtained from PC
         // m8 = content of main memory by reading address specified by register
         // m16 = content of main memory by reading address specified by register pair
         // a8 = content of main memory by reading address specified by the 1-byte immediate data
@@ -57,6 +60,7 @@ private:
         auto JR_cc_s8(FlagCondition cc) -> u8;
         auto JP_n16() -> u8;
         auto JP_cc_n16(FlagCondition cc) -> u8;
+        auto JP_r16(RegisterPair reg_pair) -> u8;
         auto INC_r8(Register &reg) -> u8;
         auto INC_r16(RegisterPair &reg_pair) -> u8;
         auto INC_SP() -> u8;
@@ -72,7 +76,9 @@ private:
         auto LD_m16_r8(RegisterPair &reg_pair, Register reg) -> u8;
         auto LD_r8_r16(Register &reg, RegisterPair reg_pair) -> u8;
         auto LD_n16_SP() -> u8;
+        auto LD_SP_r16(RegisterPair reg_pair) -> u8;
         auto LD_SP_n16() -> u8;
+        auto LD_HL_SP_s8() -> u8;
         auto LD_A_HLdec() -> u8;
         auto LD_HLdec_A() -> u8;
         auto LD_A_HLinc() -> u8;
@@ -91,6 +97,7 @@ private:
         auto ADC_r8_m16(Register &reg_into, RegisterPair reg_pair_from) -> u8;
         auto ADD_HL_r16(RegisterPair reg_pair) -> u8;
         auto ADD_HL_SP() -> u8;
+        auto ADD_SP_s8() -> u8;
 
         auto SUB_r8(Register reg) -> u8;
         auto SUB_m16(RegisterPair reg_pair) -> u8;
@@ -100,13 +107,17 @@ private:
         auto SBC_n8() -> u8;
 
         auto AND_r8(Register reg) -> u8;
+        auto AND_n8() -> u8;
         auto AND_m16(RegisterPair reg_pair) -> u8;
         auto XOR_r8(Register reg) -> u8;
+        auto XOR_n8() -> u8;
         auto XOR_m16(RegisterPair reg_pair) -> u8;
         auto OR_r8(Register reg) -> u8;
+        auto OR_n8() -> u8;
         auto OR_m16(RegisterPair reg_pair) -> u8;
 
         auto CP_r8(Register reg) -> u8;
+        auto CP_n8() -> u8;
         auto CP_m16(RegisterPair reg_pair) -> u8;
 
         auto RLCA() -> u8;
@@ -128,4 +139,6 @@ private:
         auto CALL_cc(FlagCondition cc) -> u8;
         auto RST(u8 rst_number) -> u8;
         auto HALT() -> u8;
+        auto DI() -> u8;
+        auto EI() -> u8;
 };
