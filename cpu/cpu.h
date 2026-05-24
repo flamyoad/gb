@@ -128,6 +128,8 @@ private:
         auto RRA() -> u8;
         auto RLC(Register &reg) -> u8;
         auto RLC(RegisterPair &reg_pair) -> u8;
+        auto RRC(Register &reg) -> u8;
+        auto RRC(RegisterPair &reg_pair) -> u8;
 
         auto DAA() -> u8;
         auto CPL() -> u8;

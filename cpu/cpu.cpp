@@ -1,11 +1,9 @@
 //
 // Created by Ng Zhen Hao on 21/03/2026.
 //
-
-#include <cassert>
-
 #include "cpu.h"
 
+#include <cassert>
 #include <format>
 
 #include "../gameboy.h"
@@ -330,9 +328,18 @@ auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
         case 0x04: return RLC(h);
         case 0x05: return RLC(l);
         case 0x06: return RLC(hl);
+        case 0x07: return RLC(a);
+        case 0x08: return RRC(b);
+        case 0x09: return RRC(c);
+        case 0x0A: return RRC(d);
+        case 0x0B: return RRC(e);
+        case 0x0C: return RRC(h);
+        case 0x0D: return RRC(l);
+        case 0x0E: return RRC(hl);
+        case 0x0F: return RRC(a);
         default:
             throw std::runtime_error(
-                std::format("illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 1)
+                std::format("Illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 2)
             );
     }
 }
@@ -958,12 +965,36 @@ auto Cpu::RLC(Register &reg) -> u8 {
 // RLC (HL): Rotate left circular (indirect HL)
 auto Cpu::RLC(RegisterPair &reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
-    const u8 bit7 = (mem >> 7) & 0b1;
-    const auto result = mem << 1 | bit7;
+    const u8 bit_7 = (mem >> 7) & 0b1;
+    const auto result = mem << 1 | bit_7;
     set_flag_value(Flag::Z, result == 0);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
-    set_flag_value(Flag::C, bit7 != 0);
+    set_flag_value(Flag::C, bit_7 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
+// RRC r: Rotate right circular (register)
+auto Cpu::RRC(Register &reg) -> u8 {
+    const auto bit_0 = reg.value & 0b1;
+    reg.value = reg.value >> 1 | (bit_0 << 7);
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
+    return 2;
+}
+
+// RRC (HL): Rotate right circular (indirect HL)
+auto Cpu::RRC(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto bit_0 = mem & 0b1;
+    const auto result = mem >> 1 | (bit_0 << 7);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
     write_mmu(reg_pair.value(), result);
     return 4;
 }
