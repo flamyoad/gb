@@ -63,9 +63,11 @@ private:
         auto JP_r16(RegisterPair reg_pair) -> u8;
         auto INC_r8(Register &reg) -> u8;
         auto INC_r16(RegisterPair &reg_pair) -> u8;
+        auto INC_m16(RegisterPair &reg_pair) -> u8;
         auto INC_SP() -> u8;
         auto DEC_r8(Register &reg) -> u8;
         auto DEC_r16(RegisterPair &reg_pair) -> u8;
+        auto DEC_m16(RegisterPair &reg_pair) -> u8;
         auto DEC_SP() -> u8;
         auto LD_r8_n8(Register &reg) -> u8;
         auto LD_r8_r8(Register &reg_into, Register reg_from) -> u8;
@@ -124,6 +126,8 @@ private:
         auto RRCA() -> u8;
         auto RLA() -> u8;
         auto RRA() -> u8;
+        auto RLC(Register &reg) -> u8;
+        auto RLC(RegisterPair &reg_pair) -> u8;
 
         auto DAA() -> u8;
         auto CPL() -> u8;

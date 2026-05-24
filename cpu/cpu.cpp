@@ -5,6 +5,9 @@
 #include <cassert>
 
 #include "cpu.h"
+
+#include <format>
+
 #include "../gameboy.h"
 #include "../common_types.h"
 
@@ -85,14 +88,14 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x17: return RLA();
         case 0x18: return JR_s8();
         case 0x19: return ADD_HL_r16(de);
-        case 0x1A: return LD_r8_n8(a);
+        case 0x1A: return LD_r8_r16(a, de);
         case 0x1B: return DEC_r16(de);
         case 0x1C: return INC_r8(e);
         case 0x1D: return DEC_r8(e);
         case 0x1E: return LD_r8_n8(e);
         case 0x1F: return RRA();
         case 0x20: return JR_cc_s8(FlagCondition(Flag::Z, Condition::isNotSet));
-        case 0x21: return LD_r16_n16(de);
+        case 0x21: return LD_r16_n16(hl);
         case 0x22: return LD_HLinc_A();
         case 0x23: return INC_r16(hl);
         case 0x24: return INC_r8(h);
@@ -105,14 +108,14 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x2B: return DEC_r16(hl);
         case 0x2C: return INC_r8(l);
         case 0x2D: return DEC_r8(l);
-        case 0x2E: return LD_r8_n8(e);
+        case 0x2E: return LD_r8_n8(l);
         case 0x2F: return CPL();
         case 0x30: return JR_cc_s8(FlagCondition(Flag::C, Condition::isNotSet));
         case 0x31: return LD_SP_n16();
         case 0x32: return LD_HLdec_A();
         case 0x33: return INC_SP();
-        case 0x34: return INC_r16(hl);
-        case 0x35: return DEC_r16(hl);
+        case 0x34: return INC_m16(hl);
+        case 0x35: return DEC_m16(hl);
         case 0x36: return LD_m16_n8(hl);
         case 0x37: return SCF();
         case 0x38: return JR_cc_s8(FlagCondition(Flag::C, Condition::isSet));
@@ -121,7 +124,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x3B: return DEC_SP();
         case 0x3C: return INC_r8(a);
         case 0x3D: return DEC_r8(a);
-        case 0x3E: return LD_r8_n8(l);
+        case 0x3E: return LD_r8_n8(a);
         case 0x3F: return CCF();
         case 0x40: return LD_r8_r8(b, b);
         case 0x41: return LD_r8_r8(b, c);
@@ -155,7 +158,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0x5D: return LD_r8_r8(e, l);
         case 0x5E: return LD_r8_m16(e, hl);
         case 0x5F: return LD_r8_r8(e, a);
-        case 0x60: return LD_r8_r8(d, b);
+        case 0x60: return LD_r8_r8(h, b);
         case 0x61: return LD_r8_r8(h, c);
         case 0x62: return LD_r8_r8(h, d);
         case 0x63: return LD_r8_r8(h, e);
@@ -262,7 +265,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xC8: return RET(FlagCondition(Flag::Z, Condition::isSet));
         case 0xC9: return RET();
         case 0xCA: return JP_cc_n16(FlagCondition(Flag::Z, Condition::isSet));
-        case 0xCB: return execute_cb_opcode(opcode);
+        case 0xCB: return execute_cb_opcode(fetch_unsigned_8bit());
         case 0xCC: return CALL_cc(FlagCondition(Flag::Z, Condition::isSet));
         case 0xCD: return CALL();
         case 0xCE: return ADC_r8_n8(a);
@@ -319,7 +322,19 @@ auto Cpu::execute(const u8 opcode) -> u32 {
 }
 
 auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
-
+    switch (opcode) {
+        case 0x00: return RLC(b);
+        case 0x01: return RLC(c);
+        case 0x02: return RLC(d);
+        case 0x03: return RLC(e);
+        case 0x04: return RLC(h);
+        case 0x05: return RLC(l);
+        case 0x06: return RLC(hl);
+        default:
+            throw std::runtime_error(
+                std::format("illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 1)
+            );
+    }
 }
 
 auto Cpu::fetch_unsigned_8bit() -> u8 {
@@ -409,6 +424,17 @@ auto Cpu::INC_r16(RegisterPair &reg_pair) -> u8 {
     return 2;
 }
 
+auto Cpu::INC_m16(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto result = mem + 1;
+    const auto flag_h = (mem & 0xF) == 0xF;
+    write_mmu(reg_pair.value(), result);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, flag_h);
+    return 3;
+}
+
 auto Cpu::INC_SP() -> u8 {
     sp += 1;
     return 2;
@@ -426,6 +452,16 @@ auto Cpu::DEC_r8(Register &reg) -> u8 {
 auto Cpu::DEC_r16(RegisterPair &reg_pair) -> u8 {
     reg_pair.set(reg_pair.value() - 1);
     return 2;
+}
+
+auto Cpu::DEC_m16(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto result = mem - 1;
+    write_mmu(reg_pair.value(), result);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, true);
+    set_flag_value(Flag::H, (mem & 0xF) == 0x0);
+    return 3;
 }
 
 auto Cpu::DEC_SP() -> u8 {
@@ -906,6 +942,30 @@ auto Cpu::RRA() -> u8 {
     set_flag_value(Flag::H, false);
     set_flag_value(Flag::C, reg_a_lsb);
     return 1;
+}
+
+// RLC r: Rotate left circular (register)
+auto Cpu::RLC(Register &reg) -> u8 {
+    const u8 bit7 = (reg.value >> 7) & 0b1;
+    reg.value = reg.value << 1 | bit7;
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit7 != 0);
+    return 2;
+}
+
+// RLC (HL): Rotate left circular (indirect HL)
+auto Cpu::RLC(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const u8 bit7 = (mem >> 7) & 0b1;
+    const auto result = mem << 1 | bit7;
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit7 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 4;
 }
 
 // Load to the 8-bit A register, data from the absolute address specified by the 16-bit register HL.
