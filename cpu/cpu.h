@@ -135,6 +135,15 @@ private:
         auto RRC(Register &reg) -> u8;
         auto RRC(RegisterPair &reg_pair) -> u8;
 
+        auto SLA(Register &reg) -> u8;
+        auto SLA(RegisterPair &reg_pair) -> u8;
+        auto SRA(Register &reg) -> u8;
+        auto SRA(RegisterPair &reg_pair) -> u8;
+        auto SWAP(Register &reg) -> u8;
+        auto SWAP(RegisterPair &reg_pair) -> u8;
+        auto SRL(Register &reg) -> u8;
+        auto SRL(RegisterPair &reg_pair) -> u8;
+
         auto DAA() -> u8;
         auto CPL() -> u8;
         auto CCF() -> u8;

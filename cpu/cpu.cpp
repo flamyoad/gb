@@ -353,6 +353,38 @@ auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
         case 0x1D: return RR(l);
         case 0x1E: return RR(hl);
         case 0x1F: return RR(a);
+        case 0x20: return SLA(b);
+        case 0x21: return SLA(c);
+        case 0x22: return SLA(d);
+        case 0x23: return SLA(e);
+        case 0x24: return SLA(h);
+        case 0x25: return SLA(l);
+        case 0x26: return SLA(hl);
+        case 0x27: return SLA(a);
+        case 0x28: return SRA(b);
+        case 0x29: return SRA(c);
+        case 0x2A: return SRA(d);
+        case 0x2B: return SRA(e);
+        case 0x2C: return SRA(h);
+        case 0x2D: return SRA(l);
+        case 0x2E: return SRA(hl);
+        case 0x2F: return SRA(a);
+        case 0x30: return SWAP(b);
+        case 0x31: return SWAP(c);
+        case 0x32: return SWAP(d);
+        case 0x33: return SWAP(e);
+        case 0x34: return SWAP(h);
+        case 0x35: return SWAP(l);
+        case 0x36: return SWAP(hl);
+        case 0x37: return SWAP(a);
+        case 0x38: return SRL(b);
+        case 0x39: return SRL(c);
+        case 0x3A: return SRL(d);
+        case 0x3B: return SRL(e);
+        case 0x3C: return SRL(h);
+        case 0x3D: return SRL(l);
+        case 0x3E: return SRL(hl);
+        case 0x3F: return SRL(a);
         default:
             throw std::runtime_error(
                 std::format("Illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 2)
@@ -1061,6 +1093,103 @@ auto Cpu::RRC(RegisterPair &reg_pair) -> u8 {
     set_flag_value(Flag::C, bit_0 != 0);
     write_mmu(reg_pair.value(), result);
     return 4;
+}
+
+// SLA r: Shift left arithmetic (register)
+auto Cpu::SLA(Register &reg) -> u8 {
+    const auto bit_7 = reg.value >> 7 & 0b1;
+    reg.value = reg.value << 1 & (~0b1);
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_7 != 0);
+    return 2;
+}
+
+// SLA (HL): Shift left arithmetic (indirect HL)
+auto Cpu::SLA(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto bit_7 = mem >> 7 & 0b1;
+    const auto result = mem << 1 & (~0b1);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_7 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
+// SRA r: Shift right arithmetic (register)
+auto Cpu::SRA(Register &reg) -> u8 {
+    const auto bit_7 = reg.value >> 7 & 0b1;
+    const auto bit_0 = reg.value & 0b1;
+    reg.value = reg.value >> 1 | (bit_7 << 7);
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
+    return 2;
+}
+
+auto Cpu::SRA(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto bit_7 = mem >> 7 & 0b1;
+    const auto bit_0 = mem & 0b1;
+    const auto result = mem >> 1 | (bit_7 << 7);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
+// Swaps the high and low 4-bit nibbles of the 8-bit register r.
+auto Cpu::SWAP(Register &reg) -> u8 {
+    const auto high = reg.value >> 4;
+    const auto low = reg.value & 0xF;
+    reg.value = low << 4 | high;
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    return 2;
+}
+
+// SWAP (HL): Swap nibbles (indirect HL)
+auto Cpu::SWAP(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto high = mem >> 4;
+    const auto low = mem & 0xF;
+    const auto result = low << 4 | high;
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, false);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
+auto Cpu::SRL(Register &reg) -> u8 {
+    const auto bit_0 = reg.value & 0b1;
+    reg.value = reg.value >> 1 & (~0b10000000);
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
+    return 2;
+}
+
+auto Cpu::SRL(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto bit_0 = mem & 0b1;
+    const auto result = mem >> 1 & (~0b10000000);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 2;
 }
 
 // Load to the 8-bit A register, data from the absolute address specified by the 16-bit register HL.
