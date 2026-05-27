@@ -271,7 +271,7 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xD0: return RET(FlagCondition(Flag::C, Condition::isNotSet));
         case 0xD1: return POP(de);
         case 0xD2: return JP_cc_n16(FlagCondition(Flag::C, Condition::isNotSet));
-        case 0xD3: break;
+        case 0xD3: // no-op
         case 0xD4: return CALL_cc(FlagCondition(Flag::C, Condition::isNotSet));
         case 0xD5: return PUSH(de);
         case 0xD6: return SUB_n8();
@@ -279,32 +279,32 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xD8: return RET(FlagCondition(Flag::C, Condition::isSet));
         case 0xD9: return RETI();
         case 0xDA: return JP_cc_n16(FlagCondition(Flag::C, Condition::isSet));
-        case 0xDB: break;
+        case 0xDB: // no-op
         case 0xDC: return CALL_cc(FlagCondition(Flag::C, Condition::isSet));
-        case 0xDD: break;
+        case 0xDD: // no-op
         case 0xDE: return SBC_n8();
         case 0xDF: return RST(3);
         case 0xE0: return LDH_a8_r8(a);
         case 0xE1: return POP(hl);
         case 0xE2: return LDH_m8_r8(c, a);
-        case 0xE3: break;
-        case 0xE4: break;
+        case 0xE3: // no-op
+        case 0xE4: // no-op
         case 0xE5: return PUSH(hl);
         case 0xE6: return AND_n8();
         case 0xE7: return RST(4);
         case 0xE8: return ADD_SP_s8();
         case 0xE9: return JP_r16(hl);
         case 0xEA: return LD_a16_r8(a);
-        case 0xEB: break;
-        case 0xEC: break;
-        case 0xED: break;
+        case 0xEB: // no-op
+        case 0xEC: // no-op
+        case 0xED: // no-op
         case 0xEE: return XOR_n8();
         case 0xEF: return RST(5);
         case 0xF0: return LDH_r8_a8(a);
         case 0xF1: return POP(af);
         case 0xF2: return LDH_r8_m8(a, c);
         case 0xF3: return DI();
-        case 0xF4: break;
+        case 0xF4: // no-op
         case 0xF5: return PUSH(af);
         case 0xF6: return OR_n8();
         case 0xF7: return RST(6);
@@ -312,10 +312,14 @@ auto Cpu::execute(const u8 opcode) -> u32 {
         case 0xF9: return LD_SP_r16(hl);
         case 0xFA: return LD_r8_a16(a);
         case 0xFB: return EI();
-        case 0xFC: break;
-        case 0xFD: break;
+        case 0xFC: // no-op
+        case 0xFD: // no-op
         case 0xFE: return CP_n8();
         case 0xFF: return RST(7);
+        default:
+            throw std::runtime_error(
+                std::format("Illegal opcode: 0x{:02X} at PC: 0x{:04X}", opcode, pc - 1)
+            );
     }
 }
 
@@ -449,6 +453,134 @@ auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
         case 0x7D: return BIT(7, l);
         case 0x7E: return BIT(7, hl);
         case 0x7F: return BIT(7, a);
+        case 0x80: return RES(0, b);
+        case 0x81: return RES(0, c);
+        case 0x82: return RES(0, d);
+        case 0x83: return RES(0, e);
+        case 0x84: return RES(0, h);
+        case 0x85: return RES(0, l);
+        case 0x86: return RES(0, hl);
+        case 0x87: return RES(0, a);
+        case 0x88: return RES(1, b);
+        case 0x89: return RES(1, c);
+        case 0x8A: return RES(1, d);
+        case 0x8B: return RES(1, e);
+        case 0x8C: return RES(1, h);
+        case 0x8D: return RES(1, l);
+        case 0x8E: return RES(1, hl);
+        case 0x8F: return RES(1, a);
+        case 0x90: return RES(2, b);
+        case 0x91: return RES(2, c);
+        case 0x92: return RES(2, d);
+        case 0x93: return RES(2, e);
+        case 0x94: return RES(2, h);
+        case 0x95: return RES(2, l);
+        case 0x96: return RES(2, hl);
+        case 0x97: return RES(2, a);
+        case 0x98: return RES(3, b);
+        case 0x99: return RES(3, c);
+        case 0x9A: return RES(3, d);
+        case 0x9B: return RES(3, e);
+        case 0x9C: return RES(3, h);
+        case 0x9D: return RES(3, l);
+        case 0x9E: return RES(3, hl);
+        case 0x9F: return RES(3, a);
+        case 0xA0: return RES(4, b);
+        case 0xA1: return RES(4, c);
+        case 0xA2: return RES(4, d);
+        case 0xA3: return RES(4, e);
+        case 0xA4: return RES(4, h);
+        case 0xA5: return RES(4, l);
+        case 0xA6: return RES(4, hl);
+        case 0xA7: return RES(4, a);
+        case 0xA8: return RES(5, b);
+        case 0xA9: return RES(5, c);
+        case 0xAA: return RES(5, d);
+        case 0xAB: return RES(5, e);
+        case 0xAC: return RES(5, h);
+        case 0xAD: return RES(5, l);
+        case 0xAE: return RES(5, hl);
+        case 0xAF: return RES(5, a);
+        case 0xB0: return RES(6, b);
+        case 0xB1: return RES(6, c);
+        case 0xB2: return RES(6, d);
+        case 0xB3: return RES(6, e);
+        case 0xB4: return RES(6, h);
+        case 0xB5: return RES(6, l);
+        case 0xB6: return RES(6, hl);
+        case 0xB7: return RES(6, a);
+        case 0xB8: return RES(7, b);
+        case 0xB9: return RES(7, c);
+        case 0xBA: return RES(7, d);
+        case 0xBB: return RES(7, e);
+        case 0xBC: return RES(7, h);
+        case 0xBD: return RES(7, l);
+        case 0xBE: return RES(7, hl);
+        case 0xBF: return RES(7, a);
+        case 0xC0: return SET(0, b);
+        case 0xC1: return SET(0, c);
+        case 0xC2: return SET(0, d);
+        case 0xC3: return SET(0, e);
+        case 0xC4: return SET(0, h);
+        case 0xC5: return SET(0, l);
+        case 0xC6: return SET(0, hl);
+        case 0xC7: return SET(0, a);
+        case 0xC8: return SET(1, b);
+        case 0xC9: return SET(1, c);
+        case 0xCA: return SET(1, d);
+        case 0xCB: return SET(1, e);
+        case 0xCC: return SET(1, h);
+        case 0xCD: return SET(1, l);
+        case 0xCE: return SET(1, hl);
+        case 0xCF: return SET(1, a);
+        case 0xD0: return SET(2, b);
+        case 0xD1: return SET(2, c);
+        case 0xD2: return SET(2, d);
+        case 0xD3: return SET(2, e);
+        case 0xD4: return SET(2, h);
+        case 0xD5: return SET(2, l);
+        case 0xD6: return SET(2, hl);
+        case 0xD7: return SET(2, a);
+        case 0xD8: return SET(3, b);
+        case 0xD9: return SET(3, c);
+        case 0xDA: return SET(3, d);
+        case 0xDB: return SET(3, e);
+        case 0xDC: return SET(3, h);
+        case 0xDD: return SET(3, l);
+        case 0xDE: return SET(3, hl);
+        case 0xDF: return SET(3, a);
+        case 0xE0: return SET(4, b);
+        case 0xE1: return SET(4, c);
+        case 0xE2: return SET(4, d);
+        case 0xE3: return SET(4, e);
+        case 0xE4: return SET(4, h);
+        case 0xE5: return SET(4, l);
+        case 0xE6: return SET(4, hl);
+        case 0xE7: return SET(4, a);
+        case 0xE8: return SET(5, b);
+        case 0xE9: return SET(5, c);
+        case 0xEA: return SET(5, d);
+        case 0xEB: return SET(5, e);
+        case 0xEC: return SET(5, h);
+        case 0xED: return SET(5, l);
+        case 0xEE: return SET(5, hl);
+        case 0xEF: return SET(5, a);
+        case 0xF0: return SET(6, b);
+        case 0xF1: return SET(6, c);
+        case 0xF2: return SET(6, d);
+        case 0xF3: return SET(6, e);
+        case 0xF4: return SET(6, h);
+        case 0xF5: return SET(6, l);
+        case 0xF6: return SET(6, hl);
+        case 0xF7: return SET(6, a);
+        case 0xF8: return SET(7, b);
+        case 0xF9: return SET(7, c);
+        case 0xFA: return SET(7, d);
+        case 0xFB: return SET(7, e);
+        case 0xFC: return SET(7, h);
+        case 0xFD: return SET(7, l);
+        case 0xFE: return SET(7, hl);
+        case 0xFF: return SET(7, a);
         default:
             throw std::runtime_error(
                 std::format("Illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 2)
@@ -1236,7 +1368,7 @@ auto Cpu::SWAP(RegisterPair &reg_pair) -> u8 {
 
 auto Cpu::SRL(Register &reg) -> u8 {
     const auto bit_0 = reg.value & 0b1;
-    reg.value = reg.value >> 1 & (~0b10000000);
+    reg.value = reg.value >> 1 & ~(1 << 7);
     set_flag_value(Flag::Z, reg.value == 0);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
@@ -1247,7 +1379,7 @@ auto Cpu::SRL(Register &reg) -> u8 {
 auto Cpu::SRL(RegisterPair &reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
     const auto bit_0 = mem & 0b1;
-    const auto result = mem >> 1 & (~0b10000000);
+    const auto result = mem >> 1 & ~(1 << 7);
     set_flag_value(Flag::Z, result == 0);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
@@ -1272,6 +1404,36 @@ auto Cpu::BIT(u8 bit, RegisterPair reg_pair) -> u8 {
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, true);
     return 3;
+}
+
+// Resets the bit b of the 8-bit register r to 0.
+auto Cpu::RES(u8 bit, Register &reg) -> u8 {
+    assert(bit < 8);
+    reg.value &= ~(1 << bit);
+    return 2;
+}
+
+auto Cpu::RES(u8 bit, RegisterPair &reg_pair) -> u8 {
+    assert(bit < 8);
+    const auto mem = read_mmu(reg_pair.value());
+    const auto result = mem & ~(1 << bit);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
+// Sets the bit b of the 8-bit register r to 1.
+auto Cpu::SET(u8 bit, Register &reg) -> u8 {
+    assert(bit < 8);
+    reg.value |= (1 << bit);
+    return 2;
+}
+
+auto Cpu::SET(u8 bit, RegisterPair reg_pair) -> u8 {
+    assert(bit < 8);
+    const auto mem = read_mmu(reg_pair.value());
+    const auto result = mem | (1 << bit);
+    write_mmu(reg_pair.value(), result);
+    return 4;
 }
 
 // Load to the 8-bit A register, data from the absolute address specified by the 16-bit register HL.
