@@ -337,6 +337,22 @@ auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
         case 0x0D: return RRC(l);
         case 0x0E: return RRC(hl);
         case 0x0F: return RRC(a);
+        case 0x10: return RL(b);
+        case 0x11: return RL(c);
+        case 0x12: return RL(d);
+        case 0x13: return RL(e);
+        case 0x14: return RL(h);
+        case 0x15: return RL(l);
+        case 0x16: return RL(hl);
+        case 0x17: return RL(a);
+        case 0x18: return RR(b);
+        case 0x19: return RR(c);
+        case 0x1A: return RR(d);
+        case 0x1B: return RR(e);
+        case 0x1C: return RR(h);
+        case 0x1D: return RR(l);
+        case 0x1E: return RR(hl);
+        case 0x1F: return RR(a);
         default:
             throw std::runtime_error(
                 std::format("Illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 2)
@@ -951,6 +967,30 @@ auto Cpu::RRA() -> u8 {
     return 1;
 }
 
+// RL r: Rotate left (register)
+auto Cpu::RL(Register &reg) -> u8 {
+    const auto bit_7 = (reg.value >> 7) & 0b1;
+    reg.value = reg.value << 1 | get_flag_value(Flag::C);
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_7 != 0);
+    return 2;
+}
+
+// RL (HL): Rotate left (indirect HL)
+auto Cpu::RL(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto bit_7 = (mem >> 7) & 0b1;
+    const auto result = mem << 1 | get_flag_value(Flag::C);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_7 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
 // RLC r: Rotate left circular (register)
 auto Cpu::RLC(Register &reg) -> u8 {
     const u8 bit7 = (reg.value >> 7) & 0b1;
@@ -971,6 +1011,30 @@ auto Cpu::RLC(RegisterPair &reg_pair) -> u8 {
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
     set_flag_value(Flag::C, bit_7 != 0);
+    write_mmu(reg_pair.value(), result);
+    return 4;
+}
+
+// RR r: Rotate right (register)
+auto Cpu::RR(Register &reg) -> u8 {
+    const auto bit_0 = reg.value & 0b1;
+    reg.value = reg.value >> 1 | (get_flag_value(Flag::C) << 7);
+    set_flag_value(Flag::Z, reg.value == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
+    return 2;
+}
+
+// RR (HL): Rotate right (indirect HL)
+auto Cpu::RR(RegisterPair &reg_pair) -> u8 {
+    const auto mem = read_mmu(reg_pair.value());
+    const auto bit_0 = mem & 0b1;
+    const auto result = mem >> 1 | (get_flag_value(Flag::C) << 7);
+    set_flag_value(Flag::Z, result == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, false);
+    set_flag_value(Flag::C, bit_0 != 0);
     write_mmu(reg_pair.value(), result);
     return 4;
 }

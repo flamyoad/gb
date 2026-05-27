@@ -126,8 +126,12 @@ private:
         auto RRCA() -> u8;
         auto RLA() -> u8;
         auto RRA() -> u8;
+        auto RL(Register &reg) -> u8;
+        auto RL(RegisterPair &reg_pair) -> u8;
         auto RLC(Register &reg) -> u8;
         auto RLC(RegisterPair &reg_pair) -> u8;
+        auto RR(Register &reg) -> u8;
+        auto RR(RegisterPair &reg_pair) -> u8;
         auto RRC(Register &reg) -> u8;
         auto RRC(RegisterPair &reg_pair) -> u8;
 
