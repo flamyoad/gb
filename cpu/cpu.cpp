@@ -385,6 +385,70 @@ auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
         case 0x3D: return SRL(l);
         case 0x3E: return SRL(hl);
         case 0x3F: return SRL(a);
+        case 0x40: return BIT(0, b);
+        case 0x41: return BIT(0, c);
+        case 0x42: return BIT(0, d);
+        case 0x43: return BIT(0, e);
+        case 0x44: return BIT(0, h);
+        case 0x45: return BIT(0, l);
+        case 0x46: return BIT(0, hl);
+        case 0x47: return BIT(0, a);
+        case 0x48: return BIT(1, b);
+        case 0x49: return BIT(1, c);
+        case 0x4A: return BIT(1, d);
+        case 0x4B: return BIT(1, e);
+        case 0x4C: return BIT(1, h);
+        case 0x4D: return BIT(1, l);
+        case 0x4E: return BIT(1, hl);
+        case 0x4F: return BIT(1, a);
+        case 0x50: return BIT(2, b);
+        case 0x51: return BIT(2, c);
+        case 0x52: return BIT(2, d);
+        case 0x53: return BIT(2, e);
+        case 0x54: return BIT(2, h);
+        case 0x55: return BIT(2, l);
+        case 0x56: return BIT(2, hl);
+        case 0x57: return BIT(2, a);
+        case 0x58: return BIT(3, b);
+        case 0x59: return BIT(3, c);
+        case 0x5A: return BIT(3, d);
+        case 0x5B: return BIT(3, e);
+        case 0x5C: return BIT(3, h);
+        case 0x5D: return BIT(3, l);
+        case 0x5E: return BIT(3, hl);
+        case 0x5F: return BIT(3, a);
+        case 0x60: return BIT(4, b);
+        case 0x61: return BIT(4, c);
+        case 0x62: return BIT(4, d);
+        case 0x63: return BIT(4, e);
+        case 0x64: return BIT(4, h);
+        case 0x65: return BIT(4, l);
+        case 0x66: return BIT(4, hl);
+        case 0x67: return BIT(4, a);
+        case 0x68: return BIT(5, b);
+        case 0x69: return BIT(5, c);
+        case 0x6A: return BIT(5, d);
+        case 0x6B: return BIT(5, e);
+        case 0x6C: return BIT(5, h);
+        case 0x6D: return BIT(5, l);
+        case 0x6E: return BIT(5, hl);
+        case 0x6F: return BIT(5, a);
+        case 0x70: return BIT(6, b);
+        case 0x71: return BIT(6, c);
+        case 0x72: return BIT(6, d);
+        case 0x73: return BIT(6, e);
+        case 0x74: return BIT(6, h);
+        case 0x75: return BIT(6, l);
+        case 0x76: return BIT(6, hl);
+        case 0x77: return BIT(6, a);
+        case 0x78: return BIT(7, b);
+        case 0x79: return BIT(7, c);
+        case 0x7A: return BIT(7, d);
+        case 0x7B: return BIT(7, e);
+        case 0x7C: return BIT(7, h);
+        case 0x7D: return BIT(7, l);
+        case 0x7E: return BIT(7, hl);
+        case 0x7F: return BIT(7, a);
         default:
             throw std::runtime_error(
                 std::format("Illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 2)
@@ -1190,6 +1254,24 @@ auto Cpu::SRL(RegisterPair &reg_pair) -> u8 {
     set_flag_value(Flag::C, bit_0 != 0);
     write_mmu(reg_pair.value(), result);
     return 2;
+}
+
+auto Cpu::BIT(u8 bit, Register &reg) -> u8 {
+    assert(bit < 8);
+    const auto chosen_bit = reg.value >> bit & 0b1;
+    set_flag_value(Flag::Z, chosen_bit == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, true);
+    return 2;
+}
+
+auto Cpu::BIT(u8 bit, RegisterPair reg_pair) -> u8 {
+    assert(bit < 8);
+    const auto chosen_bit = read_mmu(reg_pair.value()) >> bit & 0b1;
+    set_flag_value(Flag::Z, chosen_bit == 0);
+    set_flag_value(Flag::N, false);
+    set_flag_value(Flag::H, true);
+    return 3;
 }
 
 // Load to the 8-bit A register, data from the absolute address specified by the 16-bit register HL.

@@ -143,6 +143,8 @@ private:
         auto SWAP(RegisterPair &reg_pair) -> u8;
         auto SRL(Register &reg) -> u8;
         auto SRL(RegisterPair &reg_pair) -> u8;
+        auto BIT(u8 bit, Register &reg) -> u8;
+        auto BIT(u8 bit, RegisterPair reg_pair) -> u8;
 
         auto DAA() -> u8;
         auto CPL() -> u8;
