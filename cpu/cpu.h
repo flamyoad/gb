@@ -13,12 +13,25 @@ class Cpu {
 public:
         explicit Cpu(Gameboy &gb);
         auto tick() -> u32;
+        u8 interrupt_flag;
+        u8 interrupt_enable;
+
+        /*
+        Bit 0: VBlank
+        Bit 1: LCD STAT
+        Bit 2: Timer
+        Bit 3: Serial
+        Bit 4: Joypad
+        Bit 5-7: unused
+        */
+        static constexpr u8 INTERRUPT_MASK = 0x1F;
 
 private:
         Gameboy& gb;
 
         /*
         https://meganesu.github.io/generate-gb-opcodes/
+        https://gist.github.com/SonoSooS/c0055300670d678b5ae8433e20bea595
         */
         // Registers
         Register a, b, c, d, e, h, l;
@@ -27,7 +40,7 @@ private:
 
         u16 pc;
         u16 sp;
-        u8 ime; // Interrupt Master Enable flag
+        bool ime; // Interrupt Master Enable flag
         bool ime_next;
         bool halted;
 
@@ -37,6 +50,10 @@ private:
         // CPU fetch decode operations
         auto execute(u8 opcode) -> u32;
         auto execute_cb_opcode(u8 opcode) -> u32;
+
+        // Interrupt handling
+        auto handle_interrupt() -> u32;
+        auto get_pending_interrupt() -> u8;
 
         auto fetch_unsigned_8bit() -> u8;
         auto fetch_unsigned_16bit() -> u16;

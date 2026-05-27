@@ -28,18 +28,34 @@ Cpu::Cpu(Gameboy &gb) :
     h.value = 0x01;
     l.value = 0x4D;
 
-    ime = 0;
+    ime = false;
+    interrupt_flag = 0;
+    interrupt_enable = 0;
     halted = false;
     ime_next = false;
 }
 
 auto Cpu::tick() -> u32 {
+    // https://gbdev.io/pandocs/halt.html
+    // The CPU wakes up as soon as an interrupt is pending, that is, when the bitwise AND of IE and IF is non-zero.
+    if ((interrupt_enable & interrupt_flag) != 0) {
+        halted = false;
+    }
+
+    if (ime && get_pending_interrupt() != 0) {
+        return handle_interrupt();
+    }
+
+    if (halted) {
+        return 1;
+    }
+
     auto opcode = fetch_unsigned_8bit();
     auto cycle_count = execute(opcode);
 
     if (ime_next) {
         ime_next = false;
-        ime = 1;
+        ime = true;
     }
 
     return cycle_count;
@@ -586,6 +602,51 @@ auto Cpu::execute_cb_opcode(u8 opcode) -> u32 {
                 std::format("Illegal CB opcode: 0xCB{:02X} at PC: 0x{:04X}", opcode, pc - 2)
             );
     }
+}
+
+// https://gbdev.io/pandocs/Interrupts.html#interrupt-handling
+auto Cpu::handle_interrupt() -> u32 {
+    const u8 pending_interrupt = get_pending_interrupt();
+
+    // Interrupt priorities ---> https://gbdev.io/pandocs/Interrupts.html#interrupt-priorities
+    // Bit 0 (VBlank) has the highest priority, and Bit 4 (Joypad) has the lowest priority.
+    u8 bit = 0;
+    for (int i = 0; i < 5; i++) {
+        // Interrupt has been found, exit the loop now.
+        if ((pending_interrupt >> i & 0b1) != 0) {
+            bit = i;
+            break;
+        }
+    }
+
+    // The IF bit corresponding to this interrupt and the IME flag are reset by the CPU.
+    // The former “acknowledges” the interrupt
+    // and the latter prevents any further interrupts from being handled until the program re-enables them, typically by using the RETI instruction.
+    interrupt_flag &= ~(1 << bit);
+    ime = false;
+
+    // The current value of the PC register is pushed onto the stack, consuming 2 more cycles.
+    // BE MINDFUL THAT, GB IS LITTLE ENDIAN HERE
+    // 0xABCD = [CD][AB]
+    write_mmu(--sp, static_cast<u8>(pc >> 8));
+    write_mmu(--sp, static_cast<u8>(pc & 0xFF));
+
+    // Jump to interrupt handler ----> https://gbdev.io/pandocs/Interrupt_Sources.html
+    switch (bit) {
+        case 0: pc = 0x0040; break; //VBlank
+        case 1: pc = 0x0048; break; //LCD Stat
+        case 2: pc = 0x0050; break; //Timer
+        case 3: pc = 0x0058; break; //Serial
+        case 4: pc = 0x0060; break; //Joypad
+        default:;
+    }
+
+    return 5;
+}
+
+auto Cpu::get_pending_interrupt() -> u8 {
+    // if & ie & 0001 1111
+    return interrupt_flag & interrupt_enable & INTERRUPT_MASK;
 }
 
 auto Cpu::fetch_unsigned_8bit() -> u8 {
@@ -1535,7 +1596,7 @@ auto Cpu::RET(FlagCondition cc) -> u8 {
 }
 
 auto Cpu::RETI() -> u8 {
-    ime = 1;
+    ime = true;
     return RET();
 }
 
@@ -1589,7 +1650,7 @@ auto Cpu::HALT() -> u8 {
 
 // Disables interrupt handling by setting IME=0 and cancelling any scheduled effects of the EI instruction if any
 auto Cpu::DI() -> u8 {
-    ime = 0;
+    ime = false;
     ime_next = false;
     return 1;
 }

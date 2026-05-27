@@ -4,8 +4,9 @@
 
 #include "mmu.h"
 #include "bios.h"
+#include "gameboy.h"
 
-Mmu::Mmu(Gameboy &gameboy) {
+Mmu::Mmu(Gameboy &gameboy) : gb(gameboy) {
     power_on();
 }
 
@@ -44,12 +45,29 @@ auto Mmu::read(u16 address) -> u8 {
         return 0xFF;
     }
 
+    if (address == 0xFF0F) {
+        return gb.cpu.interrupt_flag;
+    }
+
+    if (address == 0xFFFF) {
+        return gb.cpu.interrupt_enable;
+    }
+
     return mem[address];
 }
 
 void Mmu::write(u16 address, u8 value) {
     if (address >= 0xFF00 && address <= 0xFF7F) {
+        if (address == 0xFF0F) {
+            gb.cpu.interrupt_flag = value;
+            return;
+        }
         mem[address] = value;
+    }
+
+    if (address == 0xFFFF) {
+        gb.cpu.interrupt_enable = value;
+        return;
     }
 }
 

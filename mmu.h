@@ -17,6 +17,8 @@ public:
     void write(u16 address, u8 value);
 
 private:
+    Gameboy& gb;
+
     // 16bit address bus
     std::array<u8, 0x10000> mem {};
 
