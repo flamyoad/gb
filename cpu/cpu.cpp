@@ -31,7 +31,7 @@ Cpu::Cpu(Gameboy &gb) :
     ime = false;
     interrupt_flag = 0;
     interrupt_enable = 0;
-    halted = false;
+    state = CpuState::Running;
     ime_next = false;
 }
 
@@ -39,14 +39,23 @@ auto Cpu::tick() -> u32 {
     // https://gbdev.io/pandocs/halt.html
     // The CPU wakes up as soon as an interrupt is pending, that is, when the bitwise AND of IE and IF is non-zero.
     if ((interrupt_enable & interrupt_flag) != 0) {
-        halted = false;
+        if (state == CpuState::Halted) {
+            state = CpuState::Running;
+        }
+
+        if (state == CpuState::Stopped) {
+            // STOP is terminated by one of the P10 to P13 lines going low (Joypad button is pressed)
+            if (interrupt_flag & static_cast<u8>(Interrupt::Joypad)) {
+                state = CpuState::Running;
+            }
+        }
     }
 
     if (ime && get_pending_interrupt() != 0) {
         return handle_interrupt();
     }
 
-    if (halted) {
+    if (state == CpuState::Halted || state == CpuState::Stopped) {
         return 1;
     }
 
@@ -684,8 +693,9 @@ auto Cpu::NOP() -> u8 {
 
 auto Cpu::STOP() -> u8 {
     // Execution of a STOP instruction stops both the system clock and oscillator circuit.
+
     // STOP mode is entered and the LCD controller also stops.
-    // todo: Handle both stop mode & halted mode
+    state = CpuState::Stopped;
 
     // Resets timer's Divider register
     gb.timer.set_div(0);
@@ -1653,8 +1663,7 @@ auto Cpu::RST(u8 rst_number) -> u8 {
 }
 
 auto Cpu::HALT() -> u8 {
-    // ime = 0; // ??????!?!? https://gekkio.fi/files/gb-docs/gbctr.pdf
-    halted = true; // todo: handle interrupt in tick()
+    state = CpuState::Halted;
     return 1;
 }
 

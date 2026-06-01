@@ -16,5 +16,8 @@ void Gameboy::start() {
 
 void Gameboy::tick() {
     const auto m_cycle = cpu.tick();
-    timer.tick(m_cycle);
+
+    if (cpu.state != CpuState::Stopped) {
+        timer.tick(m_cycle);
+    }
 }

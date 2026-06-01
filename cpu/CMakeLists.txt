@@ -5,6 +5,7 @@ add_library(cpu
         register.cpp
         flag_condition.h
         interrupt.h
+        cpu_state.h
 )
 
 target_include_directories(cpu PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

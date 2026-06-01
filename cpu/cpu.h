@@ -3,6 +3,7 @@
 //
 #pragma once
 
+#include "cpu_state.h"
 #include "flag_condition.h"
 #include "interrupt.h"
 #include "register.h"
@@ -15,6 +16,7 @@ public:
         explicit Cpu(Gameboy &gb);
         u8 interrupt_flag;
         u8 interrupt_enable;
+        CpuState state;
         auto tick() -> u32;
         auto request_interrupt(Interrupt interrupt) -> void;
 
@@ -34,7 +36,6 @@ private:
         u16 sp;
         bool ime; // Interrupt Master Enable flag
         bool ime_next;
-        bool halted;
 
         auto get_flag_value(Flag flag) -> u8;
         auto set_flag_value(Flag flag, bool flag_value) -> void;
