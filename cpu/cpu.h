@@ -4,6 +4,7 @@
 #pragma once
 
 #include "flag_condition.h"
+#include "interrupt.h"
 #include "register.h"
 #include "../common_types.h"
 
@@ -12,19 +13,10 @@ class Gameboy;
 class Cpu {
 public:
         explicit Cpu(Gameboy &gb);
-        auto tick() -> u32;
         u8 interrupt_flag;
         u8 interrupt_enable;
-
-        /*
-        Bit 0: VBlank
-        Bit 1: LCD STAT
-        Bit 2: Timer
-        Bit 3: Serial
-        Bit 4: Joypad
-        Bit 5-7: unused
-        */
-        static constexpr u8 INTERRUPT_MASK = 0x1F;
+        auto tick() -> u32;
+        auto request_interrupt(Interrupt interrupt) -> void;
 
 private:
         Gameboy& gb;

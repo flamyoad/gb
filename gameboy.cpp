@@ -6,9 +6,15 @@
 
 Gameboy::Gameboy()
     : cpu(*this),
-      mmu(*this) {
+      mmu(*this),
+      timer(*this) {
 }
 
 void Gameboy::start() {
 
+}
+
+void Gameboy::tick() {
+    const auto m_cycle = cpu.tick();
+    timer.tick(m_cycle);
 }

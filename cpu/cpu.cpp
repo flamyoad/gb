@@ -61,6 +61,10 @@ auto Cpu::tick() -> u32 {
     return cycle_count;
 }
 
+auto Cpu::request_interrupt(Interrupt interrupt) -> void {
+    interrupt_flag |= static_cast<u8>(interrupt);
+}
+
 auto Cpu::get_flag_value(Flag flag) -> u8 {
     return f.value & static_cast<u8>(flag) ? 1 : 0;
 }
@@ -638,7 +642,7 @@ auto Cpu::handle_interrupt() -> u32 {
         case 2: pc = 0x0050; break; //Timer
         case 3: pc = 0x0058; break; //Serial
         case 4: pc = 0x0060; break; //Joypad
-        default:;
+        default: std::unreachable();
     }
 
     return 5;
@@ -679,9 +683,15 @@ auto Cpu::NOP() -> u8 {
 }
 
 auto Cpu::STOP() -> u8 {
-    // todo: what do here boi!?
-    // Execution of a STOP instruction stops both the system clock and oscillator circuit. STOP mode is entered and the LCD controller also stops.
-    fetch_unsigned_8bit(); // Discard the second 0x00 byte here. because STOP opcode is 0x1000
+    // Execution of a STOP instruction stops both the system clock and oscillator circuit.
+    // STOP mode is entered and the LCD controller also stops.
+    // todo: Handle both stop mode & halted mode
+
+    // Resets timer's Divider register
+    gb.timer.set_div(0);
+
+    // Discard the second 0x00 byte here. because STOP opcode is 0x1000
+    fetch_unsigned_8bit();
     return 1;
 }
 

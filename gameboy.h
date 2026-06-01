@@ -5,11 +5,13 @@
 
 #include "cpu.h"
 #include "mmu.h"
+#include "timer.h"
 
 class Gameboy {
 public:
     Gameboy();
     void start();
+    void tick();
 
 private:
     Cpu cpu;
@@ -17,4 +19,7 @@ private:
 
     Mmu mmu;
     friend class Mmu;
+
+    Timer timer;
+    friend class Timer;
 };

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 4.1)
 project(gb)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 
 add_subdirectory(cpu)
 
@@ -11,6 +11,8 @@ add_executable(gb main.cpp
         mmu.cpp
         gameboy.h
         gameboy.cpp
-        bios.h)
+        bios.h
+        timer.h
+        timer.cpp)
 
 target_link_libraries(gb PRIVATE cpu)

@@ -5,6 +5,7 @@
 #include "mmu.h"
 #include "bios.h"
 #include "gameboy.h"
+#include "timer.h"
 
 Mmu::Mmu(Gameboy &gameboy) : gb(gameboy) {
     power_on();
@@ -58,10 +59,26 @@ auto Mmu::read(u16 address) -> u8 {
 
 void Mmu::write(u16 address, u8 value) {
     if (address >= 0xFF00 && address <= 0xFF7F) {
+        if (address == 0xFF04) {
+            gb.timer.set_div(value);
+        }
+
+        if (address == 0xFF05) {
+            gb.timer.set_tima(value);
+        }
+
+        if (address == 0xFF06) {
+            gb.timer.set_tma(value);
+        }
+
+        if (address == 0xFF07) {
+            gb.timer.set_tac(value);
+        }
+
         if (address == 0xFF0F) {
             gb.cpu.interrupt_flag = value;
-            return;
         }
+
         mem[address] = value;
     }
 
