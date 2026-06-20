@@ -13,6 +13,9 @@ add_executable(gb main.cpp
         gameboy.cpp
         bios.h
         timer.h
-        timer.cpp)
+        timer.cpp
+        serial.cpp
+        serial.h
+)
 
 target_link_libraries(gb PRIVATE cpu)

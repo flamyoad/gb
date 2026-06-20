@@ -46,6 +46,14 @@ auto Mmu::read(u16 address) -> u8 {
         return 0xFF;
     }
 
+    if (address == 0xFF01) {
+        return gb.serial.read();
+    }
+
+    if (address == 0xFF02) {
+        return 0xFF;
+    }
+
     if (address == 0xFF0F) {
         return gb.cpu.interrupt_flag;
     }
@@ -59,6 +67,16 @@ auto Mmu::read(u16 address) -> u8 {
 
 void Mmu::write(u16 address, u8 value) {
     if (address >= 0xFF00 && address <= 0xFF7F) {
+        // SB (Serial Transfer Data)
+        if (address == 0xFF01) {
+            gb.serial.write(value);
+        }
+
+        // SC (Serial Transfer Control)
+        if (address == 0xFF02) {
+            gb.serial.write_control(value);
+        }
+
         if (address == 0xFF04) {
             gb.timer.set_div(value);
         }

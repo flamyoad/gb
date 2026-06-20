@@ -5,6 +5,7 @@
 
 #include "cpu.h"
 #include "mmu.h"
+#include "serial.h"
 #include "timer.h"
 
 class Gameboy {
@@ -22,4 +23,7 @@ private:
 
     Timer timer;
     friend class Timer;
+
+    Serial serial;
+    friend class Serial;
 };

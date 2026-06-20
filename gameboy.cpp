@@ -7,7 +7,8 @@
 Gameboy::Gameboy()
     : cpu(*this),
       mmu(*this),
-      timer(*this) {
+      timer(*this),
+      serial(*this) {
 }
 
 void Gameboy::start() {
