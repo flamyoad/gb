@@ -1187,7 +1187,7 @@ auto Cpu::OR_n8() -> u8 {
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
     set_flag_value(Flag::C, false);
-    return 1;
+    return 2;
 }
 
 auto Cpu::OR_m16(RegisterPair reg_pair) -> u8 {
