@@ -29,7 +29,7 @@ Cpu::Cpu(Gameboy &gb) :
     l.value = 0x4D;
 
     ime = false;
-    interrupt_flag = 0;
+    interrupt_flag = 0xE1;
     interrupt_enable = 0;
     state = CpuState::Running;
     ime_next = false;

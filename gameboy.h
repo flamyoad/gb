@@ -11,7 +11,7 @@
 class Gameboy {
 public:
     Gameboy();
-    void start();
+    void load_rom(const std::string &path);
     void tick();
 
 private:

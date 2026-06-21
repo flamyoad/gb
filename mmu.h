@@ -3,6 +3,7 @@
 //
 #pragma once
 #include <array>
+#include <vector>
 
 #include "common_types.h"
 
@@ -13,6 +14,7 @@ class Mmu {
 public:
     explicit Mmu(Gameboy &gameboy);
     void power_on();
+    void load_rom(const std::vector<u8> &rom);
     auto read(u16 address) -> u8;
     void write(u16 address, u8 value);
 

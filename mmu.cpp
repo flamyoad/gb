@@ -18,6 +18,10 @@ void Mmu::power_on() {
     mem[0xFF10] = 0x80;
 }
 
+void Mmu::load_rom(const std::vector<u8> &rom) {
+    std::copy(rom.begin(), rom.end(), mem.begin());
+}
+
 /**
 0000-3FFF 16KB ROM Bank 00 (in cartridge, fixed at bank 00)
 4000-7FFF 16KB ROM Bank 01..NN (in cartridge, switchable bank number)
@@ -66,6 +70,10 @@ auto Mmu::read(u16 address) -> u8 {
 }
 
 void Mmu::write(u16 address, u8 value) {
+    if (address <= 0x7FFF) {
+        return;
+    }
+
     if (address >= 0xFF00 && address <= 0xFF7F) {
         // SB (Serial Transfer Data)
         if (address == 0xFF01) {
@@ -96,14 +104,13 @@ void Mmu::write(u16 address, u8 value) {
         if (address == 0xFF0F) {
             gb.cpu.interrupt_flag = value;
         }
-
-        mem[address] = value;
     }
 
     if (address == 0xFFFF) {
         gb.cpu.interrupt_enable = value;
-        return;
     }
+
+    mem[address] = value;
 }
 
 auto Mmu::bios_check_successful() -> bool {

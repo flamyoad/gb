@@ -25,11 +25,11 @@ auto Serial::write_control(const u8 byte) -> void {
 
     // if bit7 enabled
     if (sc >> 7) {
-        std::cout << static_cast<char>(sb);
+        std::cout << static_cast<char>(sb) << std::flush;
 
         gb.cpu.request_interrupt(Interrupt::Serial);
 
         // Bit 7 is cleared when the transfer has finished
-        sc &= ~(1 < 7);
+        sc &= ~(1 << 7);
     }
 }
