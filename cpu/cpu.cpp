@@ -5,6 +5,8 @@
 
 #include <cassert>
 #include <format>
+#include <iostream>
+#include <ostream>
 
 #include "../gameboy.h"
 #include "../common_types.h"
@@ -60,6 +62,7 @@ auto Cpu::tick() -> u32 {
     }
 
     auto opcode = fetch_unsigned_8bit();
+    std::cout << "opcode: " << std::hex << (int)opcode << std::endl;
     auto cycle_count = execute(opcode);
 
     if (ime_next) {
@@ -1544,7 +1547,7 @@ auto Cpu::LD_A_HLinc() -> u8 {
 // Load to the absolute address specified by the 16-bit register HL, data from the 8-bit A register.
 // The value of HL is incremented after the memory write
 auto Cpu::LD_HLinc_A() -> u8 {
-    a.value = read_mmu(hl.value());
+    write_mmu(hl.value(), a.value);
     hl.set(hl.value() + 1);
     return 2;
 }
@@ -1620,14 +1623,14 @@ auto Cpu::RETI() -> u8 {
     return RET();
 }
 
-auto Cpu::POP(RegisterPair reg_pair) -> u8 {
+auto Cpu::POP(RegisterPair &reg_pair) -> u8 {
     const auto lsb = read_mmu(sp++);
     const auto msb = read_mmu(sp++);
     reg_pair.set((static_cast<u16>(msb) << 8) | lsb);
     return 3;
 }
 
-auto Cpu::PUSH(RegisterPair reg_pair) -> u8 {
+auto Cpu::PUSH(RegisterPair &reg_pair) -> u8 {
     const auto msb = static_cast<u8>(reg_pair.value() >> 8);
     const auto lsb = static_cast<u8>(reg_pair.value() & 0xFF);
     write_mmu(--sp, msb);

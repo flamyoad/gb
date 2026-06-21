@@ -168,8 +168,8 @@ private:
         auto RET() -> u8;
         auto RET(FlagCondition cc) -> u8;
         auto RETI() -> u8;
-        auto POP(RegisterPair reg_pair) -> u8;
-        auto PUSH(RegisterPair reg_pair) -> u8;
+        auto POP(RegisterPair &reg_pair) -> u8;
+        auto PUSH(RegisterPair &reg_pair) -> u8;
         auto CALL() -> u8;
         auto CALL_cc(FlagCondition cc) -> u8;
         auto RST(u8 rst_number) -> u8;
