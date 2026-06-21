@@ -62,7 +62,6 @@ auto Cpu::tick() -> u32 {
     }
 
     auto opcode = fetch_unsigned_8bit();
-    std::cout << "opcode: " << std::hex << (int)opcode << std::endl;
     auto cycle_count = execute(opcode);
 
     if (ime_next) {

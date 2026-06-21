@@ -45,21 +45,32 @@ auto Mmu::read(u16 address) -> u8 {
 
         // todo: BIOS check successful, should read from cartridge here and return values
     }
-
     if (address >= 0xFEA0 && address <= 0xFEFF) {
         return 0xFF;
     }
-
     if (address == 0xFF01) {
         return gb.serial.read();
     }
-
     if (address == 0xFF02) {
         return 0xFF;
     }
-
+    if (address == 0xFF04) {
+        return gb.timer.get_div();
+    }
+    if (address == 0xFF05) {
+        return gb.timer.get_tima();
+    }
+    if (address == 0xFF06) {
+        return gb.timer.get_tma();
+    }
+    if (address == 0xFF07) {
+        return gb.timer.get_tac();
+    }
     if (address == 0xFF0F) {
         return gb.cpu.interrupt_flag;
+    }
+    if (address == 0xFF44) {
+        return 0x90; // mock the VBlank PPU for now / fixed test 2!! todo: REMOVE
     }
 
     if (address == 0xFFFF) {

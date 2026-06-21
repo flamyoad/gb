@@ -22,7 +22,6 @@ public:
 
 private:
         Gameboy& gb;
-
         /*
         https://meganesu.github.io/generate-gb-opcodes/
         https://gist.github.com/SonoSooS/c0055300670d678b5ae8433e20bea595
