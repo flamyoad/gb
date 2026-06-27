@@ -1,10 +1,10 @@
-cmake -S . -B build
+```
+./buildProject.sh
 
-cd build
+./gb --printLogs tests/blargg/cpu_instrs/cpu_instrs.gb
 
-cmake --build .
-
-./gb ../tests/blargg/cpu_instrs/cpu_instrs.gb
+./gb --printLogs "tests/blargg/cpu_instrs/individual/04-op r,imm.gb"
+```
 
 todo:
 cpu_instrs stil failing
