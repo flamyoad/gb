@@ -1,2 +1,4 @@
+#!/usr/bin/env bash
+
 cmake -S . -B build
-cd build && cmake --build .
+cmake --build build
