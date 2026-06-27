@@ -760,7 +760,7 @@ auto Cpu::INC_r16(RegisterPair &reg_pair) -> u8 {
 
 auto Cpu::INC_m16(RegisterPair &reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
-    const auto result = mem + 1;
+    const u8 result = mem + 1; //if dont cast to u8, it failed to overflow back to 0 when INC(0xFF)
     const auto flag_h = (mem & 0xF) == 0xF;
     write_mmu(reg_pair.value(), result);
     set_flag_value(Flag::Z, result == 0);
@@ -1293,7 +1293,7 @@ auto Cpu::RL(Register &reg) -> u8 {
 auto Cpu::RL(RegisterPair &reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
     const auto bit_7 = (mem >> 7) & 0b1;
-    const auto result = mem << 1 | get_flag_value(Flag::C);
+    const u8 result = mem << 1 | get_flag_value(Flag::C);
     set_flag_value(Flag::Z, result == 0);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
@@ -1389,7 +1389,7 @@ auto Cpu::SLA(Register &reg) -> u8 {
 auto Cpu::SLA(RegisterPair &reg_pair) -> u8 {
     const auto mem = read_mmu(reg_pair.value());
     const auto bit_7 = mem >> 7 & 0b1;
-    const auto result = mem << 1 & (~0b1);
+    const u8 result = mem << 1 & (~0b1);
     set_flag_value(Flag::Z, result == 0);
     set_flag_value(Flag::N, false);
     set_flag_value(Flag::H, false);
